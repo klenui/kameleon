@@ -20,18 +20,32 @@
  */
 
 #include "system.h"
-#include "gpio.h"
-#include "led.h"
+// #include "gpio.h"
+// #include "led.h"
 #include "tty.h"
-#include "io.h"
-#include "repl.h"
-#include "runtime.h"
+// #include "io.h"
+// #include "repl.h"
+// #include "runtime.h"
+
+#include "duktape.h"
 
 int main(void) {
   system_init();
   tty_init();
-  io_init();
-  runtime_init(false);
-  repl_init();
-  io_run();
+  // io_init();
+  // runtime_init(false);
+  // repl_init();
+  // io_run();
+
+  tty_printf("started...\r\n");
+
+  duk_context *ctx = duk_create_heap_default();
+  duk_eval_string(ctx, "1+2");
+  int result = (int) duk_get_int(ctx, -1);
+  duk_destroy_heap(ctx);
+
+  while (1) {
+    tty_printf("1+2=%d\r\n", result);
+    delay(1000);
+  }
 }

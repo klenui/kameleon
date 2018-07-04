@@ -1,3 +1,6 @@
 [submodule "deps/jerryscript"]
 	path = deps/jerryscript
 	url = https://github.com/jerryscript-project/jerryscript.git
+[submodule "deps/duktape"]
+	path = deps/duktape
+	url = https://github.com/svaarala/duktape.git
