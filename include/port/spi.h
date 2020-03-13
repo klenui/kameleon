@@ -22,6 +22,7 @@
 #ifndef __SPI_H
 #define __SPI_H
 
+#include <stddef.h>
 #include <stdint.h>
 #define SPIPORT_ERROR -1
 
