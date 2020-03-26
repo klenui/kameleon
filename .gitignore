@@ -10,3 +10,6 @@ src/gen
 
 # Temp
 .vscode/ipch
+
+*~
+\#*
