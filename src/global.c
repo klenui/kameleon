@@ -664,7 +664,151 @@ static void register_global_process_object() {
 
 /****************************************************************************/
 /*                                                                          */
-/*                         ENCODE/DECODE FUNCTIONS                          */
+/*                                 TEXTENCODER                              */
+/*                                                                          */
+/****************************************************************************/
+
+/**
+ * TextEncoder() constructor
+ */
+JERRYXX_FUN(textencoder_ctor_fn) {
+  JERRYXX_CHECK_ARG_STRING_OPT(0, "label")
+  if (JERRYXX_HAS_ARG(0)) {
+    jerryxx_set_property(JERRYXX_GET_THIS, MSTR_ENCODING, JERRYXX_GET_ARG(0));
+  } else {
+    jerryxx_set_property_string(JERRYXX_GET_THIS, MSTR_ENCODING, "utf-8");
+  }
+  return jerry_create_undefined();
+}
+
+/**
+ * TextEncoder.prototype.encode() function
+ */
+JERRYXX_FUN(textencoder_encode_fn) {
+  JERRYXX_CHECK_ARG_STRING(0, "input")
+  jerry_value_t input = JERRYXX_GET_ARG(0);
+  jerry_value_t encoding = jerryxx_get_property(JERRYXX_GET_THIS, MSTR_ENCODING);
+  jerry_size_t sz = jerry_get_string_size(encoding);
+  jerry_char_t buf[sz + 1];
+  jerry_size_t len = jerry_string_to_char_buffer(encoding, buf, sz);
+  buf[len] = '\0';
+  if (strcmp((char *) buf, "ascii") == 0) {
+    jerry_size_t len = jerryxx_get_ascii_string_size(input);
+    jerry_value_t array = jerry_create_typedarray(JERRY_TYPEDARRAY_UINT8, len);
+    jerry_length_t byteOffset = 0;
+    jerry_length_t byteLength = 0;
+    jerry_value_t buffer = jerry_get_typedarray_buffer(array, &byteOffset, &byteLength);
+    uint8_t *buf = jerry_get_arraybuffer_pointer(buffer);
+    jerryxx_string_to_ascii_char_buffer(input, buf, len);
+    jerry_release_value(buffer);
+    return array;
+  } else if (strcmp((char *) buf, "utf-8") == 0) {
+    jerry_size_t len = jerry_get_utf8_string_size(input);
+    jerry_value_t array = jerry_create_typedarray(JERRY_TYPEDARRAY_UINT8, len);
+    jerry_length_t byteOffset = 0;
+    jerry_length_t byteLength = 0;
+    jerry_value_t buffer = jerry_get_typedarray_buffer(array, &byteOffset, &byteLength);
+    uint8_t *buf = jerry_get_arraybuffer_pointer(buffer);
+    jerry_string_to_utf8_char_buffer(input, buf, len);
+    jerry_release_value(buffer);
+    return array;
+  } else {
+    return jerry_create_error(JERRY_ERROR_COMMON, (const jerry_char_t *) "Unsupported encoding.");
+  }
+}
+
+static void register_global_textencoder() {
+  /* TextEncoder class */
+  jerry_value_t textencoder_ctor = jerry_create_external_function(textencoder_ctor_fn);
+  jerry_value_t textencoder_prototype = jerry_create_object();
+  jerryxx_set_property(textencoder_ctor, MSTR_PROTOTYPE, textencoder_prototype);
+  jerryxx_set_property_function(textencoder_prototype, MSTR_ENCODE, textencoder_encode_fn);
+  jerry_release_value(textencoder_prototype);
+
+  jerry_value_t global = jerry_get_global_object();
+  jerryxx_set_property(global, MSTR_TEXTENCODER, textencoder_ctor);
+  jerry_release_value(global);
+}
+
+/****************************************************************************/
+/*                                                                          */
+/*                                 TEXTDECODER                              */
+/*                                                                          */
+/****************************************************************************/
+
+/**
+ * TextDecoder() constructor
+ */
+JERRYXX_FUN(textdecoder_ctor_fn) {
+  JERRYXX_CHECK_ARG_STRING_OPT(0, "label")
+  if (JERRYXX_HAS_ARG(0)) {
+    jerryxx_set_property(JERRYXX_GET_THIS, MSTR_ENCODING, JERRYXX_GET_ARG(0));
+  } else {
+    jerryxx_set_property_string(JERRYXX_GET_THIS, MSTR_ENCODING, "utf-8");
+  }
+  return jerry_create_undefined();
+}
+
+/**
+ * TextDecoder.prototype.decode() function
+ */
+JERRYXX_FUN(textdecoder_decode_fn) {
+  JERRYXX_CHECK_ARG(0, "input")
+  jerry_value_t input = JERRYXX_GET_ARG(0);
+  if (jerry_value_is_typedarray(input) && 
+      jerry_get_typedarray_type(input) == JERRY_TYPEDARRAY_UINT8) { /* Uint8Array */
+    jerry_value_t encoding = jerryxx_get_property(JERRYXX_GET_THIS, MSTR_ENCODING);
+    jerry_size_t sz = jerry_get_string_size(encoding);
+    jerry_char_t buf[sz + 1];
+    jerry_size_t len = jerry_string_to_char_buffer(encoding, buf, sz);
+    buf[len] = '\0';
+    if (strcmp((char *) buf, "ascii") == 0) {
+      // return String.fromCharCode.apply(null, input);
+      jerry_value_t global = jerry_get_global_object();
+      jerry_value_t string_class = jerryxx_get_property(global, "String");
+      jerry_value_t from_char_code = jerryxx_get_property(string_class, "fromCharCode");
+      jerry_value_t apply = jerryxx_get_property(from_char_code, "apply");
+      jerry_value_t null_value = jerry_create_null();
+      jerry_value_t args[2] = {null_value, input};
+      jerry_value_t ret = jerry_call_function(apply, from_char_code, args, 2);
+      jerry_release_value(null_value);
+      jerry_release_value(apply);
+      jerry_release_value(from_char_code);
+      jerry_release_value(string_class);
+      jerry_release_value(global);
+      return ret;
+    } else if (strcmp((char *) buf, "utf-8") == 0) {
+      jerry_length_t byteOffset = 0;
+      jerry_length_t byteLength = 0;
+      jerry_value_t buffer = jerry_get_typedarray_buffer(input, &byteOffset, &byteLength);
+      uint8_t *buf = jerry_get_arraybuffer_pointer(buffer);
+      jerry_value_t str = jerry_create_string_sz_from_utf8(buf, byteLength);
+      jerry_release_value(buffer);
+      return str;
+    } else {
+      return jerry_create_error(JERRY_ERROR_COMMON, (const jerry_char_t *) "Unsupported encoding.");
+    }
+  } else {
+    return jerry_create_error(JERRY_ERROR_COMMON, (const jerry_char_t *) "input must be Uint8Array.");
+  }
+}
+
+static void register_global_textdecoder() {
+  /* TextDecoder class */
+  jerry_value_t textdecoder_ctor = jerry_create_external_function(textdecoder_ctor_fn);
+  jerry_value_t textdecoder_prototype = jerry_create_object();
+  jerryxx_set_property(textdecoder_ctor, MSTR_PROTOTYPE, textdecoder_prototype);
+  jerryxx_set_property_function(textdecoder_prototype, MSTR_DECODE, textdecoder_decode_fn);
+  jerry_release_value(textdecoder_prototype);
+
+  jerry_value_t global = jerry_get_global_object();
+  jerryxx_set_property(global, MSTR_TEXTDECODER, textdecoder_ctor);
+  jerry_release_value(global);
+}
+
+/****************************************************************************/
+/*                                                                          */
+/*                             BTOA/ATOB FUNCTIONS                          */
 /*                                                                          */
 /****************************************************************************/
 
@@ -672,28 +816,13 @@ static void base64_buffer_free_cb(void *native_p) {
   free(native_p);
 }
 
-JERRYXX_FUN(encode_fn) {
-  JERRYXX_CHECK_ARG(0, "binaryData")
+JERRYXX_FUN(btoa_fn) {
+  JERRYXX_CHECK_ARG(0, "data")
   jerry_value_t binary_data = JERRYXX_GET_ARG(0);
   size_t encoded_data_sz;
   unsigned char *encoded_data = NULL;
-  if (jerry_value_is_array(binary_data)) { /* for Array<number> */
-    size_t len = jerry_get_array_length(binary_data);
-    uint8_t buf[len];
-    for (int i = 0; i < len; i++) {
-      jerry_value_t item = jerry_get_property_by_index(binary_data, i);
-      if (jerry_value_is_number(item)) {
-        buf[i] = (uint8_t) jerry_get_number_value(item);
-      } else {
-        buf[i] = 0; // write 0 for non-number item.
-      }
-    }
-    encoded_data = base64_encode(buf, len, &encoded_data_sz);
-  } else if (jerry_value_is_arraybuffer(binary_data)) { /* for ArrayBuffer */
-    size_t len = jerry_get_arraybuffer_byte_length(binary_data);
-    uint8_t *buf = jerry_get_arraybuffer_pointer(binary_data);
-    encoded_data = base64_encode(buf, len, &encoded_data_sz);
-  } else if (jerry_value_is_typedarray(binary_data)) { /* for TypedArrays (Uint8Array, Int16Array, ...) */
+  if (jerry_value_is_typedarray(binary_data) &&
+      jerry_get_typedarray_type(binary_data) == JERRY_TYPEDARRAY_UINT8) { /* Uint8Array */
     jerry_length_t byteLength = 0;
     jerry_length_t byteOffset = 0;
     jerry_value_t array_buffer = jerry_get_typedarray_buffer(binary_data, &byteOffset, &byteLength);
@@ -702,9 +831,9 @@ JERRYXX_FUN(encode_fn) {
     encoded_data = base64_encode(buf, len, &encoded_data_sz);
     jerry_release_value(array_buffer);
   } else if (jerry_value_is_string(binary_data)) { /* for string */
-    jerry_size_t len = jerry_get_string_size(binary_data);
+    jerry_size_t len = jerryxx_get_ascii_string_size(binary_data);
     uint8_t buf[len];
-    jerry_string_to_char_buffer(binary_data, buf, len);
+    jerryxx_string_to_ascii_char_buffer(binary_data, buf, len);
     encoded_data = base64_encode(buf, len, &encoded_data_sz);
   } else {
     return jerry_create_error(JERRY_ERROR_TYPE, (const jerry_char_t *) "Unsupported binary data.");
@@ -718,7 +847,7 @@ JERRYXX_FUN(encode_fn) {
   }
 }
 
-JERRYXX_FUN(decode_fn) {
+JERRYXX_FUN(atob_fn) {
   JERRYXX_CHECK_ARG_STRING(0, "encodedData")
   JERRYXX_GET_ARG_STRING_AS_CHAR(0, encoded_data)
   size_t decoded_data_sz;
@@ -726,7 +855,10 @@ JERRYXX_FUN(decode_fn) {
       encoded_data_sz, &decoded_data_sz);
   if (decoded_data != NULL) {
     jerry_value_t buffer = jerry_create_arraybuffer_external(decoded_data_sz, decoded_data, base64_buffer_free_cb);
-    return buffer;
+    jerry_value_t array = jerry_create_typedarray_for_arraybuffer(
+      JERRY_TYPEDARRAY_UINT8, buffer);
+    jerry_release_value(buffer);
+    return array;
   } else {
     return jerry_create_undefined();
   }
@@ -796,8 +928,8 @@ JERRYXX_FUN(decode_uri_component_fn) {
 
 static void register_global_encoders() {
   jerry_value_t global = jerry_get_global_object();
-  jerryxx_set_property_function(global, MSTR_ENCODE, encode_fn);
-  jerryxx_set_property_function(global, MSTR_DECODE, decode_fn);
+  jerryxx_set_property_function(global, MSTR_BTOA, btoa_fn);
+  jerryxx_set_property_function(global, MSTR_ATOB, atob_fn);
   jerryxx_set_property_function(global, MSTR_ENCODE_URI_COMPONENT, encode_uri_component_fn);
   jerryxx_set_property_function(global, MSTR_DECODE_URI_COMPONENT, decode_uri_component_fn);
   jerry_release_value(global);
@@ -858,6 +990,8 @@ void global_init() {
   register_global_timers();
   register_global_console_object();
   register_global_process_object();
+  register_global_textencoder();
+  register_global_textdecoder();
   register_global_encoders();
   register_global_etc();
   run_startup_module();

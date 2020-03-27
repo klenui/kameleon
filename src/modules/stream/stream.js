@@ -13,10 +13,9 @@ class Stream extends EventEmitter {
    * @protected
    * @abstract
    * Implement how to destroy the stream
-   * 
-   * @param {Function} callback
+   * @param {Function} cb
    */  
-  _doDestroy (callback) {} // eslint-disable-line
+  _destroy (cb) {} // eslint-disable-line
 
   /**
    * @protected
@@ -31,12 +30,11 @@ class Stream extends EventEmitter {
   
   /**
    * Destroy the stream
-   * 
    * @return {this}
    */  
   destroy () {
     if (!this.destroyed) {
-      this._doDestroy((err) => {
+      this._destroy((err) => {
         if (err) {
           this.emit('error', err);
         } else {
@@ -70,7 +68,7 @@ class Readable extends Stream {
   /**
    * @protected
    * Push a chunk of data to this readable stream.
-   * @param {string} chunk
+   * @param {Uint8Array} chunk
    * @return {this}
    */  
   push (chunk) {
@@ -94,20 +92,18 @@ class Writable extends Stream {
    * @protected
    * @abstract
    * Implement how to write data on the stream
-   * 
-   * @param {Function} callback
+   * @param {Uint8Array|string} data
+   * @param {Function} cb
    */
-  _doWrite (data, callback) {} // eslint-disable-line
+  _write (data, cb) {} // eslint-disable-line
 
   /**
    * @protected
    * @abstract
    * Implement how to finish to write on the stream
-   * 
-   * @param {Function} callback
+   * @param {Function} cb
    */
-  _doFinish (callback) {} // eslint-disable-line
-
+  _final (cb) {} // eslint-disable-line
   
   /**
    * @protected
@@ -122,39 +118,45 @@ class Writable extends Stream {
   
   /**
    * Write a chunk of data to the stream
-   * 
-   * @param {string} chunk
-   * @param {Function} callback
+   * @param {Uint8Array|string} chunk
+   * @param {Function} cb
    * @return {boolean}
    */
-  write (chunk, callback) {
+  write (chunk, cb) {
     if (!this.writableEnded) {
       if (chunk) {
-        this._wbuf += chunk;
+        if (chunk instanceof Uint8Array) {
+          this._wbuf += String.fromCharCode.apply(null, chunk);
+        } else { // string
+          this._wbuf += chunk;
+        }
       }
       setTimeout(() => this.flush(), 0);
-      if (callback) callback();
+      if (cb) cb();
     }
     return this._wbuf.length === 0;
   }
   
   /**
    * Finish to write on the stream.
-   * 
-   * @param {string} chunk
-   * @param {Function} callback
+   * @param {Uint8Array|string} chunk
+   * @param {Function} cb
    * @return {Writable}
    */  
-  end (chunk, callback) {
+  end (chunk, cb) {
     if (typeof chunk === 'function') {
-      callback = chunk;
+      cb = chunk;
       chunk = undefined;
     }
     if (chunk) {
-      this._wbuf += chunk;
+      if (chunk instanceof Uint8Array) {
+        this._wbuf += String.fromCharCode.apply(null, chunk);
+      } else { // string
+        this._wbuf += chunk;
+      }
     }
-    if (callback) {
-      this.once('finish', callback);
+    if (cb) {
+      this.once('finish', cb);
     }
     this.writableEnded = true;
     if (this._wbuf.length > 0) {
@@ -165,15 +167,16 @@ class Writable extends Stream {
     return this;
   }
 
- /**
-  * @protected
-  * Flush data in internal buffer
-  */  
+  /**
+   * @protected
+   * Flush data in internal buffer
+   */  
   flush () {
     if (!this.writableFinished) {
       if (this._wbuf.length > 0) {
-        this._doWrite(this._wbuf, (err) => {
+        this._write(this._wbuf, (err) => {
           if (err) {
+            this._wbuf = '';
             this.emit('error', err);
           } else {
             if (this._wbuf.length > 0) {
@@ -189,13 +192,13 @@ class Writable extends Stream {
     }
   }
   
- /**
-  * @protected
-  * Finish to write on the stream
-  */
+  /**
+   * @protected
+   * Finish to write on the stream
+   */
   finish () {
     if (this.writableEnded && this._wbuf.length === 0) {
-      this._doFinish((err) => {
+      this._final((err) => {
         if (err) {
           this.emit('error', err);
         } else {
@@ -229,9 +232,9 @@ class Duplex extends Writable /*, Readable */ {
   /**
    * @protected
    * Push a chunk of data to this readable stream.
-   * @param {string} chunk
+   * @param {Uint8Array} chunk
    * @return {this}
-   */  
+   */
   push (chunk) {
     this.emit('data', chunk);
     return this;

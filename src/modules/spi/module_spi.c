@@ -90,41 +90,8 @@ JERRYXX_FUN(spi_transfer_fn) {
   jerry_release_value(bus_value);
 
   // write data to the bus
-  if (jerry_value_is_array(data)) { /* for Array<number> */
-    size_t len = jerry_get_array_length(data);
-    uint8_t tx_buf[len];
-    uint8_t *rx_buf = malloc(len);
-    for (int i = 0; i < len; i++) {
-      jerry_value_t item = jerry_get_property_by_index(data, i);
-      if (jerry_value_is_number(item)) {
-        tx_buf[i] = (uint8_t) jerry_get_number_value(item);
-      } else {
-        tx_buf[i] = 0; // write 0 for non-number item.
-      }
-    }
-    int ret = spi_sendrecv(bus, tx_buf, rx_buf, len, timeout);
-    if (ret == SPIPORT_ERROR) {
-      free(rx_buf);
-      return jerry_create_error(JERRY_ERROR_REFERENCE, (const jerry_char_t *) "Failed to transfer data via SPI bus.");
-    } else {
-      jerry_value_t array_buffer = jerry_create_arraybuffer_external(len,
-          rx_buf, buffer_free_cb);
-      return array_buffer;
-    }
-  } else if (jerry_value_is_arraybuffer(data)) { /* for ArrayBuffer */
-    size_t len = jerry_get_arraybuffer_byte_length(data);
-    uint8_t *tx_buf = jerry_get_arraybuffer_pointer(data);
-    uint8_t *rx_buf = malloc(len);
-    int ret = spi_sendrecv(bus, tx_buf, rx_buf, len, timeout);
-    if (ret == SPIPORT_ERROR) {
-      free(rx_buf);
-      return jerry_create_error(JERRY_ERROR_REFERENCE, (const jerry_char_t *) "Failed to transfer data via SPI bus.");
-    } else {
-      jerry_value_t array_buffer = jerry_create_arraybuffer_external(len,
-          rx_buf, buffer_free_cb);
-      return array_buffer;
-    }
-  } else if (jerry_value_is_typedarray(data)) { /* for TypedArrays (Uint8Array, Int16Array, ...) */
+  if (jerry_value_is_typedarray(data) &&
+      jerry_get_typedarray_type(data) == JERRY_TYPEDARRAY_UINT8) { /* Uint8Array */
     jerry_length_t byteLength = 0;
     jerry_length_t byteOffset = 0;
     jerry_value_t array_buffer = jerry_get_typedarray_buffer(data, &byteOffset, &byteLength);
@@ -136,27 +103,33 @@ JERRYXX_FUN(spi_transfer_fn) {
       free(rx_buf);
       return jerry_create_error(JERRY_ERROR_REFERENCE, (const jerry_char_t *) "Failed to transfer data via SPI bus.");
     } else {
-      jerry_value_t array_buffer = jerry_create_arraybuffer_external(len,
-          rx_buf, buffer_free_cb);
-      return array_buffer;
+      jerry_value_t buffer = jerry_create_arraybuffer_external(len, rx_buf,
+        buffer_free_cb);
+      jerry_value_t array = jerry_create_typedarray_for_arraybuffer(
+        JERRY_TYPEDARRAY_UINT8, buffer);
+      jerry_release_value(buffer);
+      return array;
     }
     jerry_release_value(array_buffer);
   } else if (jerry_value_is_string(data)) { /* for string */
-    jerry_size_t len = jerry_get_string_size(data);
+    jerry_size_t len = jerryxx_get_ascii_string_size(data);
     uint8_t tx_buf[len];
     uint8_t *rx_buf = malloc(len);
-    jerry_string_to_char_buffer(data, tx_buf, len);
+    jerryxx_string_to_ascii_char_buffer(data, tx_buf, len);
     int ret = spi_sendrecv(bus, tx_buf, rx_buf, len, timeout);
     if (ret == SPIPORT_ERROR) {
       free(rx_buf);
       return jerry_create_error(JERRY_ERROR_REFERENCE, (const jerry_char_t *) "Failed to transfer data via SPI bus.");
     } else {
-      jerry_value_t array_buffer = jerry_create_arraybuffer_external(len,
-          rx_buf, buffer_free_cb);
-      return array_buffer;
+      jerry_value_t buffer = jerry_create_arraybuffer_external(len, rx_buf,
+        buffer_free_cb);
+      jerry_value_t array = jerry_create_typedarray_for_arraybuffer(
+        JERRY_TYPEDARRAY_UINT8, buffer);
+      jerry_release_value(buffer);
+      return array;
     }
   } else {
-    return jerry_create_error(JERRY_ERROR_TYPE, (const jerry_char_t *) "The data argument must be one of string, Array<number>, ArrayBuffer or TypedArray.");
+    return jerry_create_error(JERRY_ERROR_TYPE, (const jerry_char_t *) "The data argument must be Uint8Array or string.");
   }
 }
 
@@ -181,29 +154,8 @@ JERRYXX_FUN(spi_send_fn) {
 
   // write data to the bus
   int ret = SPIPORT_ERROR;
-  if (jerry_value_is_array(data)) { /* for Array<number> */
-    size_t len = jerry_get_array_length(data);
-    uint8_t tx_buf[len];
-    for (int i = 0; i < len; i++) {
-      jerry_value_t item = jerry_get_property_by_index(data, i);
-      if (jerry_value_is_number(item)) {
-        tx_buf[i] = (uint8_t) jerry_get_number_value(item);
-      } else {
-        tx_buf[i] = 0; // write 0 for non-number item.
-      }
-    }
-    for (int c = 0; c < count; c++) {
-      ret = spi_send(bus, tx_buf, len, timeout);
-      if (ret < 0) break;
-    }
-  } else if (jerry_value_is_arraybuffer(data)) { /* for ArrayBuffer */
-    size_t len = jerry_get_arraybuffer_byte_length(data);
-    uint8_t *tx_buf = jerry_get_arraybuffer_pointer(data);
-    for (int c = 0; c < count; c++) {
-      ret = spi_send(bus, tx_buf, len, timeout);
-      if (ret < 0) break;
-    }
-  } else if (jerry_value_is_typedarray(data)) { /* for TypedArrays (Uint8Array, Int16Array, ...) */
+  if (jerry_value_is_typedarray(data) &&
+      jerry_get_typedarray_type(data) == JERRY_TYPEDARRAY_UINT8) { /* Uint8Array */
     jerry_length_t byteLength = 0;
     jerry_length_t byteOffset = 0;
     jerry_value_t array_buffer = jerry_get_typedarray_buffer(data, &byteOffset, &byteLength);
@@ -215,15 +167,15 @@ JERRYXX_FUN(spi_send_fn) {
     }
     jerry_release_value(array_buffer);
   } else if (jerry_value_is_string(data)) { /* for string */
-    jerry_size_t len = jerry_get_string_size(data);
+    jerry_size_t len = jerryxx_get_ascii_string_size(data);
     uint8_t tx_buf[len];
-    jerry_string_to_char_buffer(data, tx_buf, len);
+    jerryxx_string_to_ascii_char_buffer(data, tx_buf, len);
     for (int c = 0; c < count; c++) {
       ret = spi_send(bus, tx_buf, len, timeout);
       if (ret < 0) break;
     }
   } else {
-    return jerry_create_error(JERRY_ERROR_TYPE, (const jerry_char_t *) "The data argument must be one of string, Array<number>, ArrayBuffer or TypedArray.");
+    return jerry_create_error(JERRY_ERROR_TYPE, (const jerry_char_t *) "The data argument must be Uint8Array or string.");
   }
   if (ret == SPIPORT_ERROR)
     return jerry_create_error(JERRY_ERROR_REFERENCE, (const jerry_char_t *) "Failed to send data via SPI bus.");
@@ -252,14 +204,17 @@ JERRYXX_FUN(spi_recv_fn) {
   uint8_t *buf = malloc(length);
   int ret = spi_recv(bus, buf, length, timeout);
 
-  // return an array buffer
+  // return an Uin8Array
   if (ret == SPIPORT_ERROR) {
     free(buf);
     return jerry_create_error(JERRY_ERROR_REFERENCE, (const jerry_char_t *) "Failed to receive data via SPI bus.");
   } else {
     jerry_value_t array_buffer = jerry_create_arraybuffer_external(length, buf,
         buffer_free_cb);
-    return array_buffer;
+    jerry_value_t array = jerry_create_typedarray_for_arraybuffer(
+      JERRY_TYPEDARRAY_UINT8, array_buffer);
+    jerry_release_value(array_buffer);
+    return array;
   }
 }
 

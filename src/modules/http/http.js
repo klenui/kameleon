@@ -20,10 +20,14 @@ class HTTPParser {
   
   /**
    * Push a chunk of data to buffer
-   * @param {string} chunk
+   * @param {Uint8Array|string} chunk
    */
   push (chunk) {
-    this._buf += chunk;
+    if (chunk instanceof Uint8Array) {
+      this._buf += String.fromCharCode.apply(null, chunk);
+    } else {
+      this._buf += chunk;
+    }
     if (this.headersComplete) {
       this.parseBody();
     } else {
@@ -79,7 +83,8 @@ class HTTPParser {
           if (cl > 0) {
             if (this._buf.length >= idx + cl + 2) { // chunk received
               var chunk = this._buf.substr(idx + 2, cl)
-              this.incoming.emit('data', chunk);
+              var encoder = new TextEncoder('ascii');
+              this.incoming.push(encoder.encode(chunk));
               this.body += chunk;
               this._buf = this._buf.substr(idx + 2 + cl + 2);
             } else { // data not received yet
@@ -97,7 +102,8 @@ class HTTPParser {
       if (this._buf.length >= len) {
         this.body = this._buf;
         this._buf = '';
-        this.incoming.emit('data', this.body);
+        var encoder = new TextEncoder('ascii');
+        this.incoming.push(encoder.encode(this.body));
         this.end();
       }
     }
@@ -110,11 +116,13 @@ class HTTPParser {
   end () {
     if (!this.incoming.complete) {
       if (this._buf.length > 0) {
-        this.incoming.emit('data', this._buf);
+        var encoder = new TextEncoder('ascii');
+        this.incoming.push(encoder.encode(this._buf));
         this._buf = '';  
       }
       this.incoming.complete = true;
-      this.incoming.emit('end');
+      // this.incoming.emit('end');
+      this.incoming._afterEnd();
       if (this.onComplete) this.onComplete();
     }
   }
@@ -166,32 +174,34 @@ class OutgoingMessage extends stream.Writable {
   
   /**
    * Encode chunk
-   * @param {string} chunk
+   * @param {Uint8Array|string} chunk
    * @return {string}
    */
   _encodeChunk (chunk) {
-    return chunk.length.toString(16) + '\r\n' + chunk + 'r\n';
+    if (chunk instanceof Uint8Array)
+      chunk = String.fromCharCode.apply(null, chunk);
+    return chunk.length.toString(16) + '\r\n' + chunk + '\r\n';
   }
 
   /**
    * @override
    */
-  _doDestroy (callback) {
-    this.socket.destroy(callback);
+  _destroy (cb) {
+    this.socket.destroy(cb);
   }
   
   /**
    * @override
    */
-  _doWrite (chunk, callback) {
-    this.socket.write(chunk, callback);    
+  _write (chunk, cb) {
+    this.socket.write(chunk, cb);
   }
   
   /**
    * @override
    */
-  _doFinish (callback) {
-    this.socket.end(callback);
+  _final (cb) {
+    this.socket.end(cb);
   }
   
   /**
@@ -259,39 +269,43 @@ class ClientRequest extends OutgoingMessage {
   /**
    * @override
    * Write data on the stream
-   * @param {string} chunk 
-   * @param {Function} callback
+   * @param {Uint8Array|string} chunk 
+   * @param {Function} cb
    * @return {this}
    */
-  write (chunk, callback) {
+  write (chunk, cb) {
     if (!this.headersSent) {
       this.flushHeaders();
       this.headersSent = true;
     }
     if (chunk) {
+      if (chunk instanceof Uint8Array)
+        chunk = String.fromCharCode.apply(null, chunk);
       if (this._isTransferChunked()) {
         this._wbuf += this._encodeChunk(chunk);
       } else {
         this._wbuf += chunk;
       }
     }
-    if (callback) callback();
+    if (cb) cb();
     return this;
   }
   
   /**
    * @override
    * Finish to write data on the stream
-   * @param {string} chunk
-   * @param {Function} callback
+   * @param {Uint8Array|string} chunk
+   * @param {Function} cb
    * @return {this}
    */
-  end (chunk, callback) {
+  end (chunk, cb) {
     if (!this.headersSent) {
       this.flushHeaders();
       this.headersSent = true;
     }
     if (chunk) {
+      if (chunk instanceof Uint8Array)
+        chunk = String.fromCharCode.apply(null, chunk);
       if (this._isTransferChunked()) {
         this._wbuf += this._encodeChunk(chunk);
       } else {
@@ -300,7 +314,7 @@ class ClientRequest extends OutgoingMessage {
     }
     this.socket.connect(this.options, () => {
       var last = (this._isTransferChunked() ? '0\r\n\r\n' : undefined); // end of body
-      super.end(last, callback);
+      super.end(last, cb);
       this._afterFinish();
     })
     return this;
@@ -348,21 +362,21 @@ class ServerResponse extends OutgoingMessage {
   /**
    * @override
    */
-  write (chunk, callback) {
+  write (chunk, cb) {
     if (!this.headersSent) {
       this.writeHead(200);
     }
     if (chunk && this._isTransferChunked()) {
       chunk = this._encodeChunk(chunk);
     }
-    super.write(chunk, callback);
+    super.write(chunk, cb);
     return this;
   }
 
   /**
    * @override
    */
-  end (chunk, callback) {
+  end (chunk, cb) {
     if (!this.headersSent) {
       this.writeHead(200);
     }
@@ -371,9 +385,9 @@ class ServerResponse extends OutgoingMessage {
         chunk = this._encodeChunk(chunk, true) + '0\r\n\r\n'; // end of body
       } else {
         chunk = '0\r\n\r\n'; // end of body
-      }      
+      }
     }
-    super.end(chunk, callback);
+    super.end(chunk, cb);
     this._afterFinish();
     return this;
   }
@@ -404,14 +418,14 @@ class Server extends net.Server {
  *   .method {string}
  *   .path {string}
  *   .headers {object}
- * @param {Function} callback
+ * @param {Function} cb
  */
-exports.request = function (options, callback) {
+exports.request = function (options, cb) {
   var socket = new net.Socket();
   options.port = options.port || 80;
   options.method = options.method || 'GET';
   var req = new ClientRequest(options, socket);
-  if (callback) req.once('response', callback);
+  if (cb) req.once('response', cb);
   return req;
 }
 
@@ -422,14 +436,14 @@ exports.request = function (options, callback) {
  *   .port {number}
  *   .path {string}
  *   .headers {object}
-* @param {Function} callback
+* @param {Function} cb
  */
-exports.get = function (options, callback) {
+exports.get = function (options, cb) {
   var socket = new net.Socket();
   options.port = options.port || 80;
   options.method = 'GET';
   var req = new ClientRequest(options, socket);
-  if (callback) req.once('response', callback);
+  if (cb) req.once('response', cb);
   req.end();
   return req;
 }
