@@ -56,5 +56,24 @@ add_custom_target(jerry
   COMMAND python tools/build.py --clean ${JERRY_ARGS}
   BYPRODUCTS ${JERRY_LIBS})
 
-add_executable(kameleon ../src/main.c ${JERRY_LIBS})
+set(SRC_DIR ../src)
+
+set(SOURCES
+  ${SRC_DIR}/main.c
+  ${SRC_DIR}/gen/kameleon_modules.c
+  ${SRC_DIR}/gen/kameleon_magic_strings.c
+  ${SRC_DIR}/main.c
+  ${SRC_DIR}/utils.c
+  ${SRC_DIR}/base64.c
+  ${SRC_DIR}/io.c
+  ${SRC_DIR}/runtime.c
+  ${SRC_DIR}/repl.c
+  ${SRC_DIR}/jerry_port.c
+  ${SRC_DIR}/jerryxx.c
+  ${SRC_DIR}/global.c
+  ${SRC_DIR}/ymodem.c)
+  
+  
+
+add_executable(kameleon ${SOURCES} ${JERRY_LIBS})
 target_link_libraries(kameleon c nosys m)
