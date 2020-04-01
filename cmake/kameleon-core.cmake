@@ -73,7 +73,37 @@ set(SOURCES
   ${SRC_DIR}/global.c
   ${SRC_DIR}/ymodem.c)
   
-  
+include(../targets/boards/kameleon-core/target.cmake)
+
+if(KAMELEON_MODULE_PWM)
+  list(APPEND SOURCES ${SRC_DIR}/modules/pwm/module_pwm.c)
+  include_directories(${SRC_DIR}/modules/pwm)  
+endif()
+if(KAMELEON_MODULE_I2C)
+  list(APPEND SOURCES ${SRC_DIR}/modules/i2c/module_i2c.c)
+  include_directories(${SRC_DIR}/modules/i2c)  
+endif()
+if(KAMELEON_MODULE_SPI)
+  list(APPEND SOURCES ${SRC_DIR}/modules/spi/module_spi.c)
+  include_directories(${SRC_DIR}/modules/spi)  
+endif()
+if(KAMELEON_MODULE_STORAGE)
+  list(APPEND SOURCES ${SRC_DIR}/modules/storage/module_storage.c)
+  include_directories(${SRC_DIR}/modules/storage)  
+endif()
+if(KAMELEON_MODULE_UART)
+  list(APPEND SOURCES ${SRC_DIR}/modules/uart/module_uart.c)
+  include_directories(${SRC_DIR}/modules/uart)  
+endif()
+if(KAMELEON_MODULE_GRAPHICS)
+  list(APPEND SOURCES
+    ${SRC_DIR}/modules/graphics/gc_cb_prims.c
+    ${SRC_DIR}/modules/graphics/gc_1bit_prims.c
+    ${SRC_DIR}/modules/graphics/gc.c
+    ${SRC_DIR}/modules/graphics/font_default.c
+    ${SRC_DIR}/modules/graphics/module_graphics.c)
+  include_directories(${SRC_DIR}/modules/graphics)  
+endif()
 
 add_executable(kameleon ${SOURCES} ${JERRY_LIBS})
 target_link_libraries(kameleon c nosys m)

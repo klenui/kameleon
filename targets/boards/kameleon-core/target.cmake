@@ -2,8 +2,8 @@ add_definitions(-DUSE_HAL_DRIVER
   -DSTM32F411xE 
   -DUSE_FULL_ASSERT)
 
-set(TARGET_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
-set(TARGET_SHARED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../shared)
+set(TARGET_SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src)
+set(TARGET_SHARED_DIR ${CMAKE_CURRENT_LIST_DIR}/../../shared)
 
 set(SOURCES
   ${SOURCES}
@@ -51,7 +51,7 @@ set(SOURCES
   ${TARGET_SHARED_DIR}/middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c
   ${TARGET_SHARED_DIR}/middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc)
   
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include
+include_directories(${CMAKE_CURRENT_LIST_DIR}/include
   ${TARGET_SHARED_DIR}/drivers/STM32F4xx_HAL_Driver/Inc
   ${TARGET_SHARED_DIR}/drivers/STM32F4xx_HAL_Driver/Inc/Legacy
   ${TARGET_SHARED_DIR}/middlewares/ST/STM32_USB_Device_Library/Core/Inc
@@ -61,11 +61,11 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include
 
 set(TARGET_HEAPSIZE 96)
 
-ifeq ($(BOOTLOADER),1)
-  TARGET_LDSCRIPT = $(TARGET_DIR)/src/STM32F411CETx_FLASH_BOOT.ld
-else
-  TARGET_LDSCRIPT = $(TARGET_DIR)/src/STM32F411CETx_FLASH.ld
-endif
+if (BOOTLOADER)
+  set(TARGET_LDSCRIPT ${TARGET_SRC_DIR}/STM32F411CETx_FLASH_BOOT.ld)
+else()
+  set(TARGET_LDSCRIPT ${TARGET_SRC_DIR}/STM32F411CETx_FLASH.ld)
+endif()
 
 set(KAMELEON_MODULES events gpio led button pwm adc i2c spi uart graphics at storage stream net http url wifi startup)
 
