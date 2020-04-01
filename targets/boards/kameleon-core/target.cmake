@@ -7,6 +7,7 @@ set(TARGET_SHARED_DIR ${CMAKE_CURRENT_LIST_DIR}/../../shared)
 
 set(SOURCES
   ${SOURCES}
+  ${TARGET_SRC_DIR}/startup_stm32f411xe.s
   ${TARGET_SRC_DIR}/adc.c
   ${TARGET_SRC_DIR}/ringbuffer.c
   ${TARGET_SRC_DIR}/system.c
@@ -76,3 +77,4 @@ set(KAMELEON_MODULE_STORAGE 1)
 set(KAMELEON_MODULE_UART 1)
 set(KAMELEON_MODULE_GRAPHICS 1)
 
+set(CMAKE_EXE_LINKER_FLAGS "-specs=nano.specs -u _printf_float -T${TARGET_LDSCRIPT} -Wl,-Map=kameleon-core.map,--cref -Wl,--gc-sections")

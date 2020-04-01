@@ -1,14 +1,8 @@
-project(kameleon C)
+project(kameleon C ASM)
+ 
+include(../targets/boards/kameleon-core/target.cmake)
 
-set(CMAKE_SYSTEM_PROCESSOR arm)
-
-set(PREFIX arm-none-eabi-)
-set(CMAKE_C_COMPILER ${PREFIX}gcc)
-set(CMAKE_CXX_COMPILER ${PREFIX}g++)
-set(CMAKE_LINKER ${PREFIX}ld)
-set(CMAKE_OBJCOPY ${PREFIX}objcopy)
-
-set(JERRY_ROOT ../deps/jerryscript)
+set(JERRY_ROOT ${CMAKE_SOURCE_DIR}/../deps/jerryscript)
 set(JERRY_INC
   ${JERRY_ROOT}/jerry-core
   ${JERRY_ROOT}/jerry-core/api
@@ -28,9 +22,6 @@ set(JERRY_INC
   ${JERRY_ROOT}/jerry-ext/arg
   ${JERRY_ROOT}/jerry-ext/include
   ${JERRY_ROOT}/jerry-libm)
-
-set(KAMELEON_INC ../include ../include/port ../src/gen ../src/modules)
-include_directories(${KAMELEON_INC} ${JERRY_INC})
 
 set(JERRY_ARGS
   --toolchain=cmake/toolchain_mcu_stm32f4.cmake
@@ -56,9 +47,24 @@ add_custom_target(jerry
   COMMAND python tools/build.py --clean ${JERRY_ARGS}
   BYPRODUCTS ${JERRY_LIBS})
 
-set(SRC_DIR ../src)
+#=============================================================
+set(CMAKE_SYSTEM_PROCESSOR cortex-m4)
+set(CMAKE_C_FLAGS "-mlittle-endian -mthumb -mcpu=cortex-m4 -march=armv7e-m -mfpu=fpv4-sp-d16 -mfloat-abi=hard")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Og -Wall -fdata-sections -ffunction-sections -g -gdwarf-2 -MMD -MP")
 
-set(SOURCES
+set(PREFIX arm-none-eabi-)
+set(CMAKE_ASM_COMPILER ${PREFIX}gcc)
+set(CMAKE_C_COMPILER ${PREFIX}gcc)
+set(CMAKE_CXX_COMPILER ${PREFIX}g++)
+set(CMAKE_LINKER ${PREFIX}ld)
+set(CMAKE_OBJCOPY ${PREFIX}objcopy)
+
+
+set(SRC_DIR ../src)
+set(KAMELEON_INC ../include ../include/port ${SRC_DIR}/gen ${SRC_DIR}/modules)
+include_directories(${KAMELEON_INC} ${JERRY_INC})
+
+list(APPEND SOURCES
   ${SRC_DIR}/main.c
   ${SRC_DIR}/gen/kameleon_modules.c
   ${SRC_DIR}/gen/kameleon_magic_strings.c
@@ -72,8 +78,8 @@ set(SOURCES
   ${SRC_DIR}/jerryxx.c
   ${SRC_DIR}/global.c
   ${SRC_DIR}/ymodem.c)
-  
-include(../targets/boards/kameleon-core/target.cmake)
+
+message(STATUS "SOURCE: ${SOURCES}")
 
 if(KAMELEON_MODULE_PWM)
   list(APPEND SOURCES ${SRC_DIR}/modules/pwm/module_pwm.c)
@@ -99,11 +105,19 @@ if(KAMELEON_MODULE_GRAPHICS)
   list(APPEND SOURCES
     ${SRC_DIR}/modules/graphics/gc_cb_prims.c
     ${SRC_DIR}/modules/graphics/gc_1bit_prims.c
+    ${SRC_DIR}/modules/graphics/gc_16bit_prims.c
     ${SRC_DIR}/modules/graphics/gc.c
     ${SRC_DIR}/modules/graphics/font_default.c
     ${SRC_DIR}/modules/graphics/module_graphics.c)
   include_directories(${SRC_DIR}/modules/graphics)  
 endif()
 
-add_executable(kameleon ${SOURCES} ${JERRY_LIBS})
-target_link_libraries(kameleon c nosys m)
+add_executable(kameleon-core.elf ${SOURCES} ${JERRY_LIBS})
+target_link_libraries(kameleon-core.elf ${JERRY_LIBS} c nosys m)
+
+add_custom_command(OUTPUT kameleon-core.hex kameleon-core.bin
+  COMMAND ${CMAKE_OBJCOPY} -O ihex kameleon-core.elf kameleon-core.hex
+  COMMAND ${CMAKE_OBJCOPY} -O binary -S kameleon-core.elf kameleon-core.bin
+  DEPENDS kameleon-core.elf)
+
+add_custom_target(kameleon DEPENDS kameleon-core.hex kameleon-core.bin)
