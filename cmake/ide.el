@@ -1,0 +1,6 @@
+(defun build()
+  (interactive)
+  (let ((old-pwd (eshell/pwd)))
+    (cd "~/kameleon/cmake_build")
+    (compile "ninja")
+    (cd old-pwd)))

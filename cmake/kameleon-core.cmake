@@ -79,8 +79,6 @@ list(APPEND SOURCES
   ${SRC_DIR}/global.c
   ${SRC_DIR}/ymodem.c)
 
-message(STATUS "SOURCE: ${SOURCES}")
-
 if(KAMELEON_MODULE_PWM)
   list(APPEND SOURCES ${SRC_DIR}/modules/pwm/module_pwm.c)
   include_directories(${SRC_DIR}/modules/pwm)  
@@ -120,4 +118,4 @@ add_custom_command(OUTPUT kameleon-core.hex kameleon-core.bin
   COMMAND ${CMAKE_OBJCOPY} -O binary -S kameleon-core.elf kameleon-core.bin
   DEPENDS kameleon-core.elf)
 
-add_custom_target(kameleon DEPENDS kameleon-core.hex kameleon-core.bin)
+add_custom_target(kameleon ALL DEPENDS kameleon-core.hex kameleon-core.bin)
