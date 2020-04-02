@@ -1,70 +1,62 @@
-idf_component_register(SRCS
-  "esp32_main.c"
-  "../../src/base64.c"
-  "../../src/gen/kameleon_magic_strings.c"
-  "../../src/gen/kameleon_modules.c"
-  "../../src/global.c"
-  "../../src/io.c"
-  "../../src/jerry_port.c"
-  "../../src/jerryxx.c"
-  "../../src/main.c"
-  "../../src/modules/graphics/font_default.c"
-  "../../src/modules/graphics/gc.c"
-  "../../src/modules/graphics/gc_16bit_prims.c"
-  "../../src/modules/graphics/gc_1bit_prims.c"
-  "../../src/modules/graphics/gc_cb_prims.c"
-  "../../src/modules/graphics/module_graphics.c"
-  "../../src/modules/i2c/module_i2c.c"
-  "../../src/modules/pwm/module_pwm.c"
-  "../../src/modules/spi/module_spi.c"
-  "../../src/modules/storage/module_storage.c"
-  "../../src/modules/uart/module_uart.c"
-  #"../../src/modules/url/__module_url.c"
-  "../../src/repl.c"
-  "../../src/runtime.c"
-  "../../src/utils.c"
-  "../../src/ymodem.c"
-  "../../targets/boards/esp32-wrover-b/src/adc.c"
-  "../../targets/boards/esp32-wrover-b/src/flash.c"
-  "../../targets/boards/esp32-wrover-b/src/gpio.c"
-  "../../targets/boards/esp32-wrover-b/src/i2c.c"
-  "../../targets/boards/esp32-wrover-b/src/pwm.c"
-  "../../targets/boards/esp32-wrover-b/src/spi.c"
-  "../../targets/boards/esp32-wrover-b/src/storage.c"
-  "../../targets/boards/esp32-wrover-b/src/system.c"
-  "../../targets/boards/esp32-wrover-b/src/tty.c"
-  "../../targets/boards/esp32-wrover-b/src/uart.c"
-  INCLUDE_DIRS
+include(${CMAKE_CURRENT_LIST_DIR}/targets/boards/esp32-wrover-b/target.cmake)
+
+set(_TARGET_DIR targets/boards/esp32-wrover-b)
+set(_SOURCE_DIR ../../src)
+
+set(_SOURCES
+  "${_SOURCE_DIR}/base64.c"
+  "${_SOURCE_DIR}/gen/kameleon_magic_strings.c"
+  "${_SOURCE_DIR}/gen/kameleon_modules.c"
+  "${_SOURCE_DIR}/global.c"
+  "${_SOURCE_DIR}/io.c"
+  "${_SOURCE_DIR}/jerry_port.c"
+  "${_SOURCE_DIR}/jerryxx.c"
+  "${_SOURCE_DIR}/main.c"
+  "${_SOURCE_DIR}/modules/graphics/font_default.c"
+  "${_SOURCE_DIR}/modules/graphics/gc.c"
+  "${_SOURCE_DIR}/modules/graphics/gc_16bit_prims.c"
+  "${_SOURCE_DIR}/modules/graphics/gc_1bit_prims.c"
+  "${_SOURCE_DIR}/modules/graphics/gc_cb_prims.c"
+  "${_SOURCE_DIR}/modules/graphics/module_graphics.c"
+  "${_SOURCE_DIR}/modules/i2c/module_i2c.c"
+  "${_SOURCE_DIR}/modules/pwm/module_pwm.c"
+  "${_SOURCE_DIR}/modules/spi/module_spi.c"
+  "${_SOURCE_DIR}/modules/storage/module_storage.c"
+  "${_SOURCE_DIR}/modules/uart/module_uart.c"
+  #"${_SOURCE_DIR}/modules/url/__module_url.c"
+  "${_SOURCE_DIR}/repl.c"
+  "${_SOURCE_DIR}/runtime.c"
+  "${_SOURCE_DIR}/utils.c"
+  "${_SOURCE_DIR}/ymodem.c"
+)  
+set(_INCLUDES
   "../../include"
   "../../include/port"
-  "../../src/gen"
-  "../../src/modules/graphics"
-  "../../src/modules/http"
-  "../../src/modules/i2c"
-  "../../src/modules/led"
-  "../../src/modules/net"
-  "../../src/modules/pwm"
-  "../../src/modules/spi"
-  "../../src/modules/spi"
-  "../../src/modules/startup"
-  "../../src/modules/storage"
-  "../../src/modules/stream"
-  "../../src/modules/uart"
-  "../../src/modules/url"
-  "../../src/modules/wifi"
-  "../../targets/boards/esp32-wrover-b/include"
-  "../../deps/jerryscript/jerry-core/include"
-  "../../deps/jerryscript/jerry-core/include"
-  "../../deps/jerryscript/jerry-ext/include"
-  "../../deps/jerryscript/jerry-libm/include"
-  "../../deps/jerryscript/jerry-port/default/include"
-  "../../deps/jerryscript/targets/curie_bsp/include"
-  "../../deps/jerryscript/targets/curie_bsp/jerry_app/include"
-  "../../deps/jerryscript/targets/esp8266/include")
+  "${_SOURCE_DIR}/gen"
+  "${_SOURCE_DIR}/modules/graphics"
+  "${_SOURCE_DIR}/modules/http"
+  "${_SOURCE_DIR}/modules/i2c"
+  "${_SOURCE_DIR}/modules/led"
+  "${_SOURCE_DIR}/modules/net"
+  "${_SOURCE_DIR}/modules/pwm"
+  "${_SOURCE_DIR}/modules/spi"
+  "${_SOURCE_DIR}/modules/spi"
+  "${_SOURCE_DIR}/modules/startup"
+  "${_SOURCE_DIR}/modules/storage"
+  "${_SOURCE_DIR}/modules/stream"
+  "${_SOURCE_DIR}/modules/uart"
+  "${_SOURCE_DIR}/modules/url"
+  "${_SOURCE_DIR}/modules/wifi")
+  
+idf_component_register(SRCS
+  "esp32_main.c"
+  ${TARGET_SOURCE}
+  ${_SOURCES}
+  INCLUDE_DIRS
+  ${_INCLUDES}
+  ${TARGET_INCLUDE}
+  ${JERRY_INCLUDE}
+  REQUIRES jerryscript spi_flash)
 
-add_prebuilt_library(libjerry-core "${COMPONENT_DIR}/../components/jerryscript/libjerry-core.a")
-add_prebuilt_library(libjerry-ext "${COMPONENT_DIR}/../components/jerryscript/libjerry-ext.a")
-add_prebuilt_library(libjerry-port "${COMPONENT_DIR}/../components/jerryscript/libjerry-port-default.a")
-
-target_link_libraries(${COMPONENT_LIB} PRIVATE libjerry-core libjerry-ext libjerry-port "-lm" "-lc")
+target_link_libraries(${COMPONENT_LIB} PRIVATE "-lm" "-lc")
 
