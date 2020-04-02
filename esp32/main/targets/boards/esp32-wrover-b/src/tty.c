@@ -25,31 +25,52 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <unistd.h>
 
 #include "tty.h"
 #include "system.h"
 
+static fd_set readfds;
+static struct timeval timeout;
+
 void tty_init()
 {
-  // TODO
 }
+
 
 uint32_t tty_available()
 {
-  // TODO
+  int state;
+  
+  FD_ZERO(&readfds);
+  FD_SET(0, &readfds);
+
+  timeout.tv_sec = timeout.tv_usec = 0;
+  state = select(1, &readfds, NULL, NULL, &timeout);
+  if ( state > 0 ) return 1;
+
   return 0;
 }
 
 uint32_t tty_read(uint8_t *buf, size_t len)
 {
-  // TODO
-  return 0;
+  return read(0, (void*)buf, len);
 }
 
-uint32_t tty_read_sync(uint8_t *buf, size_t len, uint32_t timeout)
+uint32_t tty_read_sync(uint8_t *buf, size_t len, uint32_t _timeout)
 {
-  // TODO
-  return 0;
+  int state;
+  
+  FD_ZERO(&readfds);
+  FD_SET(0, &readfds);
+
+  timeout.tv_sec = _timeout;
+  timeout.tv_usec = 0;
+  
+  state = select(1, &readfds, NULL, NULL, &timeout);
+  if ( state <= 0 ) return 0;
+
+  return tty_read(buf, len);
 }
 
 

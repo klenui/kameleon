@@ -1,6 +1,5 @@
 include(${CMAKE_CURRENT_LIST_DIR}/targets/boards/esp32-wrover-b/target.cmake)
 
-set(_TARGET_DIR targets/boards/esp32-wrover-b)
 set(_SOURCE_DIR ../../src)
 
 set(_SOURCES
@@ -55,7 +54,6 @@ idf_component_register(SRCS
   INCLUDE_DIRS
   ${_INCLUDES}
   ${TARGET_INCLUDE}
-  ${JERRY_INCLUDE}
   REQUIRES jerryscript spi_flash)
 
 target_link_libraries(${COMPONENT_LIB} PRIVATE "-lm" "-lc")
