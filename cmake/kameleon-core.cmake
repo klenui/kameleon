@@ -41,12 +41,10 @@ set(JERRY_LIBS
   ${JERRY_ROOT}/build/lib/libjerry-core.a
   ${JERRY_ROOT}/build/lib/libjerry-ext.a)
 
-  
-add_custom_target(jerry
+add_custom_command(OUTPUT ${JERRY_LIBS}
   WORKING_DIRECTORY ${JERRY_ROOT}
-  COMMAND python tools/build.py --clean ${JERRY_ARGS}
-  BYPRODUCTS ${JERRY_LIBS})
-
+  COMMAND python tools/build.py --clean ${JERRY_ARGS})
+  
 #=============================================================
 set(CMAKE_SYSTEM_PROCESSOR cortex-m4)
 set(CMAKE_C_FLAGS "-mlittle-endian -mthumb -mcpu=cortex-m4 -march=armv7e-m -mfpu=fpv4-sp-d16 -mfloat-abi=hard")
