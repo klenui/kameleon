@@ -30,25 +30,60 @@
 #include "tty.h"
 #include "system.h"
 
-static fd_set readfds;
-static struct timeval timeout;
+#include "esp_system.h"
+#include "esp_log.h"
+#include "esp_console.h"
+#include "esp_vfs_dev.h"
+#include "driver/uart.h"
+
 
 void tty_init()
 {
-}
+    /* Disable buffering on stdin */
+    setvbuf(stdin, NULL, _IONBF, 0);
 
+    /* Minicom, screen, idf_monitor send CR when ENTER key is pressed */
+    esp_vfs_dev_uart_set_rx_line_endings(ESP_LINE_ENDINGS_CR);
+    /* Move the caret to the beginning of the next line on '\n' */
+    esp_vfs_dev_uart_set_tx_line_endings(ESP_LINE_ENDINGS_CRLF);
+
+    /* Configure UART. Note that REF_TICK is used so that the baud rate remains
+     * correct while APB frequency is changing in light sleep mode.
+     */
+    const uart_config_t uart_config = {
+       .baud_rate = CONFIG_ESP_CONSOLE_UART_BAUDRATE,
+       .data_bits = UART_DATA_8_BITS,
+       .parity = UART_PARITY_DISABLE,
+       .stop_bits = UART_STOP_BITS_1,
+       .use_ref_tick = true
+    };
+    ESP_ERROR_CHECK( uart_param_config(CONFIG_ESP_CONSOLE_UART_NUM, &uart_config) );
+
+    /* Install UART driver for interrupt-driven reads and writes */
+    ESP_ERROR_CHECK( uart_driver_install(CONFIG_ESP_CONSOLE_UART_NUM,
+            256, 0, 0, NULL, 0) );
+
+    /* Tell VFS to use UART driver */
+    esp_vfs_dev_uart_use_driver(CONFIG_ESP_CONSOLE_UART_NUM);
+
+    /* Initialize the console */
+    esp_console_config_t console_config = {
+            .max_cmdline_args = 8,
+            .max_cmdline_length = 256,
+#if CONFIG_LOG_COLORS
+            .hint_color = atoi(LOG_COLOR_CYAN)
+#endif
+    };
+    ESP_ERROR_CHECK( esp_console_init(&console_config) );
+}
 
 uint32_t tty_available()
 {
-  int state;
-  
-  FD_ZERO(&readfds);
-  FD_SET(0, &readfds);
-
-  timeout.tv_sec = timeout.tv_usec = 0;
-  state = select(1, &readfds, NULL, NULL, &timeout);
-  if ( state > 0 ) return 1;
-
+  size_t len;
+  if ( uart_get_buffered_data_len(CONFIG_ESP_CONSOLE_UART_NUM, &len) == ESP_OK )
+    {
+      return len;
+    }
   return 0;
 }
 
@@ -57,9 +92,12 @@ uint32_t tty_read(uint8_t *buf, size_t len)
   return read(0, (void*)buf, len);
 }
 
+
 uint32_t tty_read_sync(uint8_t *buf, size_t len, uint32_t _timeout)
 {
   int state;
+  fd_set readfds;
+  struct timeval timeout;
   
   FD_ZERO(&readfds);
   FD_SET(0, &readfds);

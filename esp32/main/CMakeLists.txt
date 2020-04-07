@@ -54,7 +54,7 @@ idf_component_register(SRCS
   INCLUDE_DIRS
   ${_INCLUDES}
   ${TARGET_INCLUDE}
-  REQUIRES jerryscript spi_flash)
+  REQUIRES jerryscript spi_flash console log)
 
 target_link_libraries(${COMPONENT_LIB} PRIVATE "-lm" "-lc")
 
