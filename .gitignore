@@ -13,3 +13,5 @@ src/gen
 
 *~
 \#*
+.vscode/tasks.json
+cmake_build/

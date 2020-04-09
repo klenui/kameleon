@@ -37,13 +37,16 @@
 #include "driver/uart.h"
 
 
+static const char* TAG = "kameleon";
+
 void tty_init()
 {
     /* Disable buffering on stdin */
     setvbuf(stdin, NULL, _IONBF, 0);
+    setvbuf(stdout, NULL, _IONBF, 0);
 
     /* Minicom, screen, idf_monitor send CR when ENTER key is pressed */
-    esp_vfs_dev_uart_set_rx_line_endings(ESP_LINE_ENDINGS_CR);
+    esp_vfs_dev_uart_set_rx_line_endings(ESP_LINE_ENDINGS_LF);
     /* Move the caret to the beginning of the next line on '\n' */
     esp_vfs_dev_uart_set_tx_line_endings(ESP_LINE_ENDINGS_CRLF);
 
@@ -51,7 +54,7 @@ void tty_init()
      * correct while APB frequency is changing in light sleep mode.
      */
     const uart_config_t uart_config = {
-       .baud_rate = CONFIG_ESP_CONSOLE_UART_BAUDRATE,
+       .baud_rate = CONFIG_ESP_CONSOLE_UART_BAUDRATE+1,
        .data_bits = UART_DATA_8_BITS,
        .parity = UART_PARITY_DISABLE,
        .stop_bits = UART_STOP_BITS_1,
@@ -65,16 +68,7 @@ void tty_init()
 
     /* Tell VFS to use UART driver */
     esp_vfs_dev_uart_use_driver(CONFIG_ESP_CONSOLE_UART_NUM);
-
-    /* Initialize the console */
-    esp_console_config_t console_config = {
-            .max_cmdline_args = 8,
-            .max_cmdline_length = 256,
-#if CONFIG_LOG_COLORS
-            .hint_color = atoi(LOG_COLOR_CYAN)
-#endif
-    };
-    ESP_ERROR_CHECK( esp_console_init(&console_config) );
+    printf("\r\n");
 }
 
 uint32_t tty_available()
@@ -89,12 +83,13 @@ uint32_t tty_available()
 
 uint32_t tty_read(uint8_t *buf, size_t len)
 {
-  return read(0, (void*)buf, len);
+  return read(CONFIG_ESP_CONSOLE_UART_NUM, (void*)buf, len);
 }
 
 
 uint32_t tty_read_sync(uint8_t *buf, size_t len, uint32_t _timeout)
 {
+  /*
   int state;
   fd_set readfds;
   struct timeval timeout;
@@ -109,6 +104,8 @@ uint32_t tty_read_sync(uint8_t *buf, size_t len, uint32_t _timeout)
   if ( state <= 0 ) return 0;
 
   return tty_read(buf, len);
+  */
+  return 0;
 }
 
 

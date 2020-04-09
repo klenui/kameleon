@@ -7,7 +7,7 @@ find main -name "*.h" >> cscope.files
 find ../src -name "*.h" >> cscope.files
 find ../deps -name "*.h" >> cscope.files
 
-for DIR in newlib vfs driver esp32
+for DIR in newlib vfs driver esp32 
 do
     find $IDF_PATH/components/$DIR -name "*.c" >> cscope.files
     find $IDF_PATH/components/$DIR -name "*.h" >> cscope.files
