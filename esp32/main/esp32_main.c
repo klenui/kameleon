@@ -24,7 +24,5 @@ void app_main()
   io_init();
   repl_init();
   runtime_init(load, true);
-  ESP_LOGD(TAG, "app_main 8");
   io_run();
-  ESP_LOGD(TAG, "app_main 9");
 }

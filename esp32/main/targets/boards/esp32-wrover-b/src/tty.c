@@ -68,7 +68,11 @@ void tty_init()
 
     /* Tell VFS to use UART driver */
     esp_vfs_dev_uart_use_driver(CONFIG_ESP_CONSOLE_UART_NUM);
-    printf("\r\n");
+
+	// 
+	uart_wait_tx_done(CONFIG_ESP_CONSOLE_UART_NUM, 1000);
+	uart_flush(CONFIG_ESP_CONSOLE_UART_NUM);
+	printf("\r\n");
 }
 
 uint32_t tty_available()

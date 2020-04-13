@@ -21,6 +21,9 @@
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <sys/time.h>
+#include <unistd.h>
+
 #include "system.h"
 #include "tty.h"
 #include "kameleon_core.h"
@@ -78,11 +81,16 @@ void micro_delay(uint32_t usec) {
 
 void inc_tick()
 {
+  
 }
 
+// ms 단위의 시간 return
+// jerryscript setInterval 구현을 위해 필수적.
 uint64_t gettime()
 {
-  return 0;
+  struct timeval tv_now;
+  gettimeofday(&tv_now, NULL);
+  return (uint64_t)tv_now.tv_sec * 1E3L + (uint64_t)(tv_now.tv_usec/1E3);
 }
 
 void settime(uint64_t time)

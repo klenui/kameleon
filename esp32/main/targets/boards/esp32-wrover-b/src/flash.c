@@ -33,7 +33,7 @@ uint32_t flash_size()
   return 0;
 }
 
-const char* test_script = "print(\"in script ok\\n\");\nsetInterval(function(){ print(\"in timer ok\"); }, 1000);\n";
+const char* test_script = "print(\"in script ok\\n\");\nsetInterval(function(){ print(\"in timer ok\"); }, 1000);\nprint(\"the timer was set.\");\n\n";
 
 uint8_t *flash_get_data()
 {

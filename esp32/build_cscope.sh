@@ -3,6 +3,7 @@
 find main -name "*.c" > cscope.files
 find ../src -name "*.c" >> cscope.files
 find ../deps -name "*.c" >> cscope.files
+find ../deps -name "*.cpp" >> cscope.files
 find main -name "*.h" >> cscope.files
 find ../src -name "*.h" >> cscope.files
 find ../deps -name "*.h" >> cscope.files
