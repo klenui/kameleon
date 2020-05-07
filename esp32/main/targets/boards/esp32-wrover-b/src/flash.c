@@ -33,7 +33,42 @@ uint32_t flash_size()
   return 0;
 }
 
-const char* test_script = "print(\"in script ok\\n\");\nsetInterval(function(){ print(\"in timer ok\"); }, 1000);\nprint(\"the timer was set.\");\n\n";
+const char* const timer_test_script = "print(\"in script ok\\n\");\nsetInterval(function(){ print(\"in timer ok\"); }, 1000);\nprint(\"the timer was set.\");\n\n";
+
+const char* const gpio_test_script =
+  "print(\"in script ok\\n\");"
+  "var pin = board.gpio(0, OUTPUT);"
+  "setInterval(function(){ "
+  "pin.toggle();"
+  "print(\"in timer ok\"); "
+  "}, 1000);"
+  "print(\"the timer was set.\");";
+
+const char* const spi_test_script =
+  "print(\"in script ok\\n\");"
+  "var GPIO = require('gpio').GPIO;"
+  "var SPI =require('spi').SPI;"
+  "var spi0cs = new GPIO(9, OUTPUT);"
+  "var spioOptions = { mode: SPI.MODE_0, baudrate: 800000, bitorder: SPI.MSB};"
+  "var spi0 = board.spi(0, spiOptions);"
+  "var array = new Uint8Array([79,75]);"
+  "spi0cs.write(LOW);"
+  "setInterval(function(){ "
+  "spi.send(array);"
+  "print(\"in timer ok\"); "
+  "}, 1000);"
+  "print(\"the timer was set.\");";
+
+const char* const i2c_test_script =
+  "print(\"in script ok\\n\");"
+  "var array = new Uint8Array([79,75]);"
+  "var i2c0 = board.i2c(0);"
+  "setInterval(function(){ "
+  "i2c0.write(array, 0x68);"
+  "print(\"in timer ok\"); "
+  "}, 1000);"
+  "print(\"the timer was set.\");";
+const char* const test_script = timer_test_script;
 
 uint8_t *flash_get_data()
 {
