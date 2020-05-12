@@ -68,12 +68,12 @@ const char* const i2c_test_script =
   "var array = new Uint8Array([79,75]);"
   "var i2c0 = board.i2c(0);"
   "setInterval(function(){ "
-  "i2c0.write(array, 0x68);"
-  "print(\"in timer ok\"); "
+  "i2c0.write(array, 0x28);"
+  "print(\"in timer ok\\n\"); "
   "}, 1000);"
-  "print(\"the timer was set.\");";
+  "print(\"the timer was set.\\n\");";
 
-const char* const test_script = gpio_test_script;
+const char* const test_script = i2c_test_script;
 
 uint8_t *flash_get_data()
 {

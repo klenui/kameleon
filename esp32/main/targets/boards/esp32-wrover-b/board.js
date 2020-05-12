@@ -30,7 +30,13 @@ global.board = {
       return null;
   },
   i2c: function (bus, mode, mode_option) {
-      return null;
+    if (bus < 0 || bus >= this.NUM_I2C) {
+      throw Error('Unsupported I2C bus.');
+    }
+    var I2C = global.require('i2c').I2C;
+    mode = (typeof mode === 'number' ? mode : 0);
+    mode_option = (typeof mode_option === 'number' ? mode_option : 100000);
+    return new I2C(bus, mode, mode_option);
   },
   spi: function (bus, options) {
       return null;

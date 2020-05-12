@@ -24,58 +24,93 @@
 #include "i2c.h"
 #include "tty.h"
 
+int _i2c_setup_master(uint8_t bus, uint32_t speed);
+int _i2c_setup_slave(uint8_t bus, uint8_t address);
+int _i2c_master_read_slave(int i2c_num, int address, uint8_t *data_rd, size_t size, uint32_t timeout);
+int _i2c_master_write_slave(int i2c_num, int address, uint8_t *data_wr, size_t size, uint32_t timeout);
+int _i2c_slave_read_buffer(int i2c_num, uint8_t *data, size_t max_size, uint32_t timeout);
+int _i2c_slave_write_buffer(int i2c_num, const uint8_t *data, int size, uint32_t timeout);
+
+
 void i2c_init()
 {
+  printf("i2c_init()\n");
 }
 
 void i2c_cleanup()
 {
+  printf("i2c_cleanup()\n");
 }
 
 int i2c_setup_master(uint8_t bus, uint32_t speed)
 {
-  return 0;
+  printf("i2c_setup_master(%d, %d)\n", bus, speed);
+  return _i2c_setup_master(bus, speed);
 }
 
 int i2c_setup_slave(uint8_t bus, uint8_t address)
 {
-  return 0;
+  printf("i2c_setup_slave(%d, %d)\n", bus, address);
+  return _i2c_setup_slave(bus, address);
+}
+
+
+/**
+ * @brief test function to show buffer
+ */
+static void disp_buf(uint8_t *buf, int len)
+{
+    int i;
+    for (i = 0; i < len; i++) {
+        printf("%02x ", buf[i]);
+        if ((i + 1) % 16 == 0) {
+            printf("\n");
+        }
+    }
+    printf("\n");
 }
 
 int i2c_memWrite_master(uint8_t bus, uint8_t address, uint16_t memAddress, uint8_t memAdd16bit, uint8_t *buf, size_t len, uint32_t timeout)
 {
+  printf("i2c_memWrite_master(%d, %d)\n", bus, address);
   return 0;
 }
 
 int i2c_memRead_master(uint8_t bus, uint8_t address, uint16_t memAddress, uint8_t memAdd16bit, uint8_t *buf, size_t len, uint32_t timeout)
 {
+  printf("i2c_memRead_master(%d, %d)\n", bus, address);
   return 0;
 }
 
 int i2c_write_master(uint8_t bus, uint8_t address, uint8_t *buf, size_t len,
   uint32_t timeout)
 {
-  return 0;
+  printf("i2c_write_master(%d, %d)\n", bus, address);
+  return _i2c_master_write_slave(bus, address, buf, len, timeout);
 }
 
 int i2c_write_slave(uint8_t bus, uint8_t *buf, size_t len, uint32_t timeout)
 {
-  return 0;
+  printf("i2c_write_slave(%d)\n", bus);
+  return _i2c_slave_write_buffer(bus, buf, len, timeout);
 }
 
 int i2c_read_master(uint8_t bus, uint8_t address, uint8_t *buf, size_t len,
   uint32_t timeout)
 {
-  return 0;
+  printf("i2c_read_master(%d, %d)\n", bus, address);
+  return _i2c_master_read_slave(bus, address, buf, len, timeout);
 }
 
 int i2c_read_slave(uint8_t bus, uint8_t *buf, size_t len, uint32_t timeout)
 {
-  return 0;
+  printf("i2c_read_slave(%d)\n", bus);
+  return _i2c_slave_read_buffer(bus, buf, len, timeout);
 }
 
 int i2c_close(uint8_t bus)
 {
+  printf("i2c_close(%d)\n", bus);
   return 0;
 }
 
