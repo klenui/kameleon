@@ -37,12 +37,16 @@ const char* const timer_test_script = "print(\"in script ok\\n\");\nsetInterval(
 
 const char* const gpio_test_script =
   "print(\"in script ok\\n\");"
-  "var pin = board.gpio(0, OUTPUT);"
+  "var pinR = board.gpio(0, OUTPUT);"
+  "var pinG = board.gpio(2, OUTPUT);"
+  "var pinB = board.gpio(4, OUTPUT);"
   "setInterval(function(){ "
-  "pin.toggle();"
-  "print(\"in timer ok\"); "
+  "pinR.toggle();"
+  "pinG.toggle();"
+  "pinB.toggle();"
+  "print(\"in timer ok\\n\"); "
   "}, 1000);"
-  "print(\"the timer was set.\");";
+  "print(\"the timer was set.\\n\");";
 
 const char* const spi_test_script =
   "print(\"in script ok\\n\");"
@@ -68,7 +72,8 @@ const char* const i2c_test_script =
   "print(\"in timer ok\"); "
   "}, 1000);"
   "print(\"the timer was set.\");";
-const char* const test_script = timer_test_script;
+
+const char* const test_script = gpio_test_script;
 
 uint8_t *flash_get_data()
 {
