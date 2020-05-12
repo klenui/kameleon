@@ -64,9 +64,10 @@ const char* const spi_test_script =
   "print(\"the timer was set.\");";
 
 const char* const i2c_test_script =
+  "var I2C = require('i2c').I2C;"
   "print(\"in script ok\\n\");"
   "var array = new Uint8Array([79,75]);"
-  "var i2c0 = board.i2c(0);"
+  "var i2c0 = new I2C(0);"
   "setInterval(function(){ "
   "i2c0.write(array, 0x28);"
   "print(\"in timer ok\\n\"); "
