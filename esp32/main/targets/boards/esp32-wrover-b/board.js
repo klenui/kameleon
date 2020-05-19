@@ -6,7 +6,7 @@ global.board = {
   NUM_PWM: 0,
   NUM_ADC: 0,
   NUM_I2C: 2,
-  NUM_SPI: 2,
+  NUM_SPI: 1,
   NUM_UART: 0,
     led_pins: [0,2,4],
   button_pins: [],
@@ -39,7 +39,15 @@ global.board = {
     return new I2C(bus, mode, mode_option);
   },
   spi: function (bus, options) {
-      return null;
+    if (bus < 0 || bus >= this.NUM_SPI) {
+      throw Error('Unsupported SPI bus.');
+    }
+    var SPI = global.require('spi').SPI;
+    if (arguments.length > 1) {
+      return new SPI(bus, options);
+    } else {
+      return new SPI(bus);
+    }
   },
   uart: function (port, options) {
       return null;

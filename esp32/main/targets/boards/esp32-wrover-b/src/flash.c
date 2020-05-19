@@ -52,14 +52,14 @@ const char* const spi_test_script =
   "print(\"in script ok\\n\");"
   "var GPIO = require('gpio').GPIO;"
   "var SPI =require('spi').SPI;"
-  "var spi0cs = new GPIO(9, OUTPUT);"
-  "var spioOptions = { mode: SPI.MODE_0, baudrate: 800000, bitorder: SPI.MSB};"
-  "var spi0 = board.spi(0, spiOptions);"
-  "var array = new Uint8Array([79,75]);"
+  "var spi0cs = new GPIO(14, OUTPUT);"
+  "var spiOptions = { mode: SPI.MODE_0, baudrate: 800000, bitorder: SPI.MSB};"
+  "var spi = board.spi(0, spiOptions);"
+  "var array = new Uint8Array([104,101,108,108,111,0,0,0]);"
   "spi0cs.write(LOW);"
   "setInterval(function(){ "
   "spi.send(array);"
-  "print(\"in timer ok\"); "
+  "print(\"in timer ok\\n\"); "
   "}, 1000);"
   "print(\"the timer was set.\");";
 
@@ -74,7 +74,7 @@ const char* const i2c_test_script =
   "}, 1000);"
   "print(\"the timer was set.\\n\");";
 
-const char* const test_script = i2c_test_script;
+const char* const test_script = spi_test_script;
 
 uint8_t *flash_get_data()
 {
