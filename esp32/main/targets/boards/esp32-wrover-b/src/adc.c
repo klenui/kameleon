@@ -22,27 +22,69 @@
 #include <stdint.h>
 #include "adc.h"
 #include "kameleon_core.h"
+#include <driver/adc.h>
+#include <driver/gpio.h>
+#include <esp_adc_cal.h>
+#include <soc/adc_channel.h>
+
+#define DEFAULT_VREF 1100
+#define NO_OF_SAMPLES 64
+
+static esp_adc_cal_characteristics_t *adc_chars = NULL;
+static const adc_bits_width_t width = ADC_WIDTH_BIT_12;
+static const adc_atten_t atten = ADC_ATTEN_DB_0;
+static const adc_unit_t unit = ADC_UNIT_1;
 
 void adc_init()
 {
+		
 }
 
 void adc_cleanup()
 {
 }
 
+static uint8_t pin_to_channel(uint8_t pin)
+{
+	switch(pin)
+	{
+		case 32: return ADC1_GPIO32_CHANNEL;
+		case 33: return ADC1_GPIO33_CHANNEL;
+		case 34: return ADC1_GPIO34_CHANNEL;
+		case 35: return ADC1_GPIO35_CHANNEL;
+		case 36: return ADC1_GPIO36_CHANNEL;
+		case 37: return ADC1_GPIO37_CHANNEL;
+		case 38: return ADC1_GPIO38_CHANNEL;
+		case 39: return ADC1_GPIO39_CHANNEL;
+		default: return 0;
+	}
+}
+
 int adc_setup(uint8_t pin)
 {
-  return 0;
+	uint8_t channel = pin_to_channel(pin);
+	if ( channel == 0 ) return -1;
+
+	if ( adc_chars ) return;
+	adc1_config_width(width);
+	adc1_config_channel_atten(channel, atten);
+	adc_chars = calloc(1, sizeof(esp_adc_cal_characteristics_t));
+	esp_adc_cal_value_t val_type = esp_adc_cal_characterize(unit, atten, width, DEFAULT_VREF, adc_chars);
+	return channel;
 }
 
 double adc_read(uint8_t adcIndex)
 {
-  return 0.0;
+	uint32_t reading = adc1_get_raw(adcIndex);
+	uint32_t voltage = esp_adc_cal_raw_to_voltage(reading, adc_chars);
+	return voltage / 1000.0;
 }
 
 int adc_close(uint8_t pin)
 {
-  return 0;
+	if ( adc_chars == NULL ) return 0;
+	free(adc_chars);
+	adc_chars = NULL;
+	return 0;
 }
 
