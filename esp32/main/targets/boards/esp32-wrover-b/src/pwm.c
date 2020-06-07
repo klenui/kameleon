@@ -26,7 +26,7 @@
 #include "kameleon_core.h"
 
 
-static ledc_timer_config timer_config = {
+static ledc_timer_config_t timer_config = {
 	.duty_resolution = LEDC_TIMER_13_BIT,
 	.freq_hz = 5000,
 	.speed_mode = LEDC_HIGH_SPEED_MODE,
@@ -71,7 +71,7 @@ int pwm_start(uint8_t pin)
 int pwm_stop(uint8_t pin)
 {
 	if (channel.gpio_num != pin ) return -1;
-	ledc_stop(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0);
+	ledc_stop(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0, 0);
 	return 0;
 }
 
