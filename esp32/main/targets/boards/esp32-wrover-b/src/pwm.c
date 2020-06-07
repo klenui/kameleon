@@ -20,8 +20,27 @@
  */
 
 #include <stdint.h>
+#include <freertos/FreeRTOS.h>
+#include <driver/ledc.h>
 #include "pwm.h"
 #include "kameleon_core.h"
+
+
+static ledc_timer_config timer_config = {
+	.duty_resolution = LEDC_TIMER_13_BIT,
+	.freq_hz = 5000,
+	.speed_mode = LEDC_HIGH_SPEED_MODE,
+	.timer_num = LEDC_TIMER_0,
+	.clk_cfg = LEDC_AUTO_CLK
+};
+static ledc_channel_config_t channel = {
+	.channel = LEDC_CHANNEL_0,
+	.duty = 0,
+	.gpio_num = 0,
+	.speed_mode = LEDC_HIGH_SPEED_MODE,
+	.hpoint = 0,
+	.timer_sel = LEDC_TIMER_0,
+};
 
 void pwm_init()
 {
@@ -33,37 +52,55 @@ void pwm_cleanup()
 
 int pwm_setup(uint8_t pin, double frequency, double duty)
 {
-  return 0;
+	timer_config.freq_hz = frequency;
+	channel.gpio_num = pin;
+	channel.duty = duty;
+
+	ledc_timer_config(&timer_config);
+	ledc_channel_config(&channel);
+	return 0;
 }
 
 int pwm_start(uint8_t pin)
 {
-  return 0;
+	if (channel.gpio_num != pin ) return -1;
+	ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0);
+	return 0;
 }
 
 int pwm_stop(uint8_t pin)
 {
-  return 0;
+	if (channel.gpio_num != pin ) return -1;
+	ledc_stop(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0);
+	return 0;
 }
 
 double pwm_get_frequency(uint8_t pin)
 {
-  return 0;
+	if (channel.gpio_num != pin ) return -1;
+	return timer_config.freq_hz;
 }
 
 int pwm_set_frequency(uint8_t pin, double frequency)
 {
-  return 0;
+	if (channel.gpio_num != pin ) return -1;
+	timer_config.freq_hz = frequency;
+	ledc_timer_config(&timer_config);
+	return 0;
 }
 
 double pwm_get_duty(uint8_t pin)
 {
-  return 0;
+	if (channel.gpio_num != pin ) return 0.;
+	return (double)channel.duty/8192;
 }
 
 int pwm_set_duty(uint8_t pin, double duty)
 {
-  return 0;
+	if (channel.gpio_num != pin ) return -1;
+	channel.duty = (uint32_t)(duty*8192);
+	ledc_channel_config(&channel);
+	return 0;
 }
 
 int pwm_close(uint8_t pin)
