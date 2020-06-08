@@ -49,6 +49,7 @@ set(_INCLUDES
   
 idf_component_register(SRCS
   "esp32_main.c"
+  "ieee80211dev.c"
   ${TARGET_SOURCE}
   ${_SOURCES}
   INCLUDE_DIRS

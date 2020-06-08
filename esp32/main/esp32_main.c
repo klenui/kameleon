@@ -14,6 +14,8 @@
 
 static const char* TAG = "kameleon";
 
+void register_global_ieee80211dev();
+
 void app_main()
 {
   bool load = false;
