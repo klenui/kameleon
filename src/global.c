@@ -983,6 +983,9 @@ static void run_board_module() {
   jerry_release_value (res);
 }
 
+extern void register_global_ieee80211dev();
+extern void register_global_pwm();
+
 void global_init() {
   register_global_objects();
   register_global_digital_io();
@@ -994,6 +997,8 @@ void global_init() {
   register_global_textdecoder();
   register_global_encoders();
   register_global_etc();
+  register_global_ieee80211dev();
+  register_global_pwm();
   run_startup_module();
   run_board_module();
 }

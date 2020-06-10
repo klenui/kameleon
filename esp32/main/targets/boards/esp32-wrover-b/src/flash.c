@@ -95,18 +95,18 @@ const char* const pwm_test_script =
   "print(\"PWM start\\n\");";
 
 const char* const wifi_test_script =
-  "var WIFI = require('wifi').WiFi;"
   "print(\"in script ok\\n\");"
-  "var wifi = new WIFI();"
+  "var wifi = require('wifi');"
+  "print(\"check 1\\n\");"
   "wifi.scan(function(err, scanResult){"
   "if(err !=null){"
   "print(\"err: \", err);"
   "} else {"
   "print(\"scanResult: \", scanResult);"
-  "}"
+  "}});"
   "print(\"the timer was set.\\n\");";
 
-const char* const test_script = pwm_test_script;
+const char* const test_script = wifi_test_script;
 
 uint8_t *flash_get_data()
 {

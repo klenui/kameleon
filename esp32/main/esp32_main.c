@@ -14,16 +14,11 @@
 
 static const char* TAG = "kameleon";
 
-void register_global_ieee80211dev();
-void register_global_pwm();
-
 void app_main()
 {
   bool load = false;
   /* Print chip information */
   system_init();
-  register_global_ieee80211dev();
-  register_global_pwm();
   load = running_script_check();
   tty_init();
   io_init();
