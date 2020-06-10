@@ -97,9 +97,8 @@ const char* const pwm_test_script =
 const char* const wifi_test_script =
   "print(\"in script ok\\n\");"
   "var wifi = require('wifi');"
-  "print(\"check 1\\n\");"
   "wifi.scan(function(err, scanResult){"
-  "if(err !=null){"
+  "if(err != null){"
   "print(\"err: \", err);"
   "} else {"
   "print(\"scanResult: \", scanResult);"

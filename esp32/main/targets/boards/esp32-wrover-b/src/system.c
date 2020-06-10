@@ -34,6 +34,9 @@
 #include "spi.h"
 #include "uart.h"
 
+#include <esp_wifi.h>
+#include <nvs_flash.h>
+
 const char system_arch[] = "esp32";
 const char system_platform[] = "unknown";
 
@@ -107,6 +110,28 @@ uint32_t micro_gettime(void)
   return 0;
 }
 
+static void nvs_init(void)
+{
+    // Initialize NVS
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK( ret );
+}
+
+static void wifi_init(void)
+{
+   tcpip_adapter_init();
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+}
+
+extern void wifi_start(void);
+
 /**
  * Kameleon Hardware System Initializations
  */
@@ -117,6 +142,9 @@ void system_init() {
   i2c_init();
   spi_init();
   uart_init();
+  nvs_init();
+  wifi_init();
+  wifi_start();
 }
 
 void system_cleanup() {

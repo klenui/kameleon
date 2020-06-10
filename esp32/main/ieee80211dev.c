@@ -6,12 +6,13 @@
 #include "runtime.h"
 #include "global.h"
 #include "jerryxx.h"
+#include <freertos/FreeRTOS.h>
+#include <freertos/event_groups.h>
 #include <esp_wifi.h>
 #include <esp_log.h>
 #include <esp_event.h>
-#include <nvs_flash.h>
 
-#define DEFAULT_SSID "hyde"
+#define DEFAULT_SSID ""
 #define DEFAULT_PWD ""
 #define DEFAULT_SCAN_METHOD WIFI_FAST_SCAN
 #define DEFAULT_SORT_METHOD WIFI_CONNECT_AP_BY_SIGNAL
@@ -26,59 +27,95 @@ JERRYXX_FUN(ieee80211dev_reset_fn) {
   return 0;
 }
 
+
+static jerry_value_t ap_list_to_jobject(const wifi_ap_record_t* ap_list, int count)
+{
+  jerry_value_t jobj = jerry_create_array(count);
+  jerry_value_t ssidStr = jerry_create_string((const jerry_char_t*)"ssid");
+  jerry_value_t rssiStr = jerry_create_string((const jerry_char_t*)"rssi");
+  for(int i = 0 ; i < count ; i++)
+  {
+    jerry_value_t elem = jerry_create_object();
+    jerry_value_t ssidVal = jerry_create_string(ap_list[i].ssid);
+    jerry_value_t rssiVal = jerry_create_number(ap_list[i].rssi);
+    jerry_set_property(elem, ssidStr, ssidVal);
+    jerry_set_property(elem, rssiStr, rssiVal);
+    jerry_release_value(ssidVal);
+    jerry_release_value(rssiVal);
+
+    jerry_set_property_by_index(jobj, i, elem);
+    jerry_release_value(elem);
+  }
+  jerry_release_value(ssidStr);
+  jerry_release_value(rssiStr);
+
+  return jobj;
+}
+
+static jerry_value_t callback_arg = 0;
+static void call_callback(jerry_value_t callback)
+{
+    jerry_value_t nullObj = jerry_create_null();
+    jerry_value_t undefined = jerry_create_undefined();
+    const jerry_value_t args[2] = {nullObj, callback_arg};
+    jerry_value_t ret = jerry_call_function(callback, undefined, args, 2);
+    if (jerry_value_is_error(ret)) {
+      jerryxx_print_error(ret, true);
+    } 
+    jerry_release_value(ret);
+    jerry_release_value(nullObj);
+    jerry_release_value(undefined);
+    jerry_release_value(callback_arg);
+    callback_arg = 0;
+}
 static void event_handler(void* arg, esp_event_base_t event_base, 
                                 int32_t event_id, void* event_data)
 {
-    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
+    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_SCAN_DONE) {
+      printf("WIFI_EVENT_SCAN_DONE\n");
+      uint16_t count;
+      esp_wifi_scan_get_ap_num(&count);
+      wifi_ap_record_t* ap_list = malloc(count * sizeof(wifi_ap_record_t));
+      esp_wifi_scan_get_ap_records(&count, ap_list);
+      callback_arg = ap_list_to_jobject(ap_list, count);
+      free(ap_list);
+    } 
+  /*
+    else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
-    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+    } 
+    else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         esp_wifi_connect();
-    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+    } 
+    else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
         ESP_LOGI(TAG, "got ip: %s", ip4addr_ntoa(&event->ip_info.ip));
     }
+    */
+}
+
+void wifi_start(void)
+{
+    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    ESP_ERROR_CHECK(esp_wifi_start());
 }
 
 /* Initialize Wi-Fi as sta and set scan method */
-static void wifi_scan(void)
+static void wifi_scan(jerry_value_t callback)
 {
-    // Initialize NVS
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK( ret );
-  
-  tcpip_adapter_init();
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
-
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
-    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
-
-    wifi_config_t wifi_config = {
-        .sta = {
-            .ssid = DEFAULT_SSID,
-            .password = DEFAULT_PWD,
-            .scan_method = DEFAULT_SCAN_METHOD,
-            .sort_method = DEFAULT_SORT_METHOD,
-            .threshold.rssi = DEFAULT_RSSI,
-            .threshold.authmode = DEFAULT_AUTHMODE,
-        },
-    };
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
-    ESP_ERROR_CHECK(esp_wifi_start());
+  wifi_scan_config_t scan_config = {0};
+  ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_SCAN_DONE, &event_handler, NULL));
+  ESP_ERROR_CHECK(esp_wifi_scan_start(&scan_config, true));
+  ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, WIFI_EVENT_SCAN_DONE, &event_handler));
+  call_callback(callback);
 }
 
 JERRYXX_FUN(ieee80211dev_scan_fn) {
   JERRYXX_CHECK_ARG_FUNCTION(0, "callback");
   jerry_value_t callback = JERRYXX_GET_ARG(0);
   printf("ieee80211dev_scan_fn\n");
-  wifi_scan();
+  wifi_scan(callback);
   return 0;
 }
 JERRYXX_FUN(ieee80211dev_connect_fn) {
