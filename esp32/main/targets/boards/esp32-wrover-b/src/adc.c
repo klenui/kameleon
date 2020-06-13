@@ -32,7 +32,7 @@
 
 static esp_adc_cal_characteristics_t *adc_chars = NULL;
 static const adc_bits_width_t width = ADC_WIDTH_BIT_12;
-static const adc_atten_t atten = ADC_ATTEN_DB_0;
+static const adc_atten_t atten = ADC_ATTEN_DB_11;
 static const adc_unit_t unit = ADC_UNIT_1;
 
 void adc_init()
@@ -60,16 +60,28 @@ static uint8_t pin_to_channel(uint8_t pin)
 	}
 }
 
+static void print_char_val_type(esp_adc_cal_value_t val_type)
+{
+    if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
+        printf("Characterized using Two Point Value\n");
+    } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
+        printf("Characterized using eFuse Vref\n");
+    } else {
+        printf("Characterized using Default Vref\n");
+    }
+}
+
 int adc_setup(uint8_t pin)
 {
 	uint8_t channel = pin_to_channel(pin);
 	if ( channel == 0 ) return -1;
 
-	if ( adc_chars ) return;
+	if ( adc_chars ) return channel;
 	adc1_config_width(width);
 	adc1_config_channel_atten(channel, atten);
 	adc_chars = calloc(1, sizeof(esp_adc_cal_characteristics_t));
 	esp_adc_cal_value_t val_type = esp_adc_cal_characterize(unit, atten, width, DEFAULT_VREF, adc_chars);
+	print_char_val_type(val_type);
 	return channel;
 }
 
@@ -77,6 +89,7 @@ double adc_read(uint8_t adcIndex)
 {
 	uint32_t reading = adc1_get_raw(adcIndex);
 	uint32_t voltage = esp_adc_cal_raw_to_voltage(reading, adc_chars);
+	//printf("adc_read(%d) : %d, %d\n", adcIndex, reading, voltage);
 	return voltage / 1000.0;
 }
 
