@@ -77,8 +77,7 @@ const char* const i2c_test_script =
 const char* const adc_test_script =
   "var ADC = require('adc').ADC;"
   "print(\"in script ok\\n\");"
-  "var array = new Uint8Array([79,75]);"
-  "var adc = new ADC(0);"
+  "var adc = new ADC(34);"
   "setInterval(function(){ "
   "print(\"adc : \", adc.read(), \"\\n\");"
   "}, 1000);"
@@ -87,9 +86,9 @@ const char* const adc_test_script =
 const char* const pwm_test_script =
   "var PWM = require('pwm').PWM;"
   "print(\"in script ok\\n\");"
-  "var pin = 1;"
-  "var freq = 500;"
-  "var duty = 0.5;"
+  "var pin = 18;"
+  "var freq = 5000;"
+  "var duty = 0.37;"
   "var pwm = new PWM(pin, freq, duty);"
   "pwm.start();"
   "print(\"PWM start\\n\");";
@@ -102,10 +101,9 @@ const char* const wifi_test_script =
   "print(\"err: \", err);"
   "} else {"
   "print(\"scanResult: \", scanResult);"
-  "}});"
-  "print(\"the timer was set.\\n\");";
+  "}});";
 
-const char* const test_script = wifi_test_script;
+const char* const test_script = adc_test_script;
 
 uint8_t *flash_get_data()
 {

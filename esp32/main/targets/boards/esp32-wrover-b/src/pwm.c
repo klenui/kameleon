@@ -52,9 +52,10 @@ void pwm_cleanup()
 
 int pwm_setup(uint8_t pin, double frequency, double duty)
 {
-	timer_config.freq_hz = frequency;
+	printf("pwm_setup(%d, %lf, %lf)\n", pin ,frequency, duty);
+	timer_config.freq_hz = (uint32_t)frequency;
 	channel.gpio_num = pin;
-	channel.duty = duty;
+	channel.duty = (uint32_t)(8192*duty);
 
 	ledc_timer_config(&timer_config);
 	ledc_channel_config(&channel);
@@ -63,13 +64,19 @@ int pwm_setup(uint8_t pin, double frequency, double duty)
 
 int pwm_start(uint8_t pin)
 {
-	if (channel.gpio_num != pin ) return -1;
+	printf("pwm_start(%d)\n", pin);
+	if (channel.gpio_num != pin ) 
+	{
+		printf("pwm_start return -1\n");
+		return -1;
+	}
 	ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0);
 	return 0;
 }
 
 int pwm_stop(uint8_t pin)
 {
+	printf("pwm_stop(%d)\n", pin);
 	if (channel.gpio_num != pin ) return -1;
 	ledc_stop(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0, 0);
 	return 0;
