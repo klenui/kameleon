@@ -103,7 +103,23 @@ const char* const wifi_test_script =
   "print(\"scanResult: \", scanResult);"
   "}});";
 
-const char* const test_script = adc_test_script;
+const char* const http_test_script = 
+  "print(\"in script ok\\n\");"
+  "var wifi = require('http');"
+;
+
+const char* const storage_test_script =
+  "print(\"in script ok\\n\");"
+  "var storage = require('storage');"
+;
+
+const char* const flash_test_script =
+  "print(\"in script ok\\n\");"
+  "var flash = require('flash');"
+;
+
+
+const char* const test_script = http_test_script;
 
 uint8_t *flash_get_data()
 {
