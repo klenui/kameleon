@@ -104,13 +104,33 @@ const char* const wifi_test_script =
   "}});";
 
 const char* const http_test_script = 
-  "print(\"in script ok\\n\");"
-  "var wifi = require('http');"
+"print(\"in script ok\\n\");"
+"const http = require('http');"
+"http.get({"
+"  host : '192.168.17.103',"
+"  port : 8000,"
+"  path : '/index.js'"
+"}, (res) => {"
+"  res.resume();"
+"  res.on('data', (chunk) => {"
+"    console.log(`Chunk : ${chunk}`);"
+"  });"
+"  res.on('end', () => {"
+"    console.log('Done.');"
+"  });"
+"});"
 ;
 
 const char* const storage_test_script =
-  "print(\"in script ok\\n\");"
-  "var storage = require('storage');"
+"print(\"in script ok\\n\");"
+"const Storage=require('storage');"
+"const storage = new Storage();"
+"storage.setItem('value1', 'abcd');"
+"storage.setItem('value2', '1234');"
+"const val1 = storage.getItem('value1');"
+"const val2 = storage.getItem('value2');"
+"console.log(`val1 : ${val1}`);"
+"console.log(`val2 : ${val2}`);"
 ;
 
 const char* const flash_test_script =
