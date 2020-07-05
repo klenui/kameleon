@@ -24,8 +24,12 @@
 #include "flash.h"
 #include "tty.h"
 
+#define JS_NAMESPACE ("js")
+int nvs_clear(const char* namespace);
+
 void flash_clear()
 {
+  return nvs_clear(JS_NAMESPACE);
 }
 
 uint32_t flash_size()
@@ -143,7 +147,8 @@ const char* const test_script = http_test_script;
 
 uint8_t *flash_get_data()
 {
-  return (uint8_t*)test_script;
+  //return nvs_get_item(PROGRAM_NAMESPACE, key);
+  return test_script;
 }
 
 uint32_t flash_get_data_size()

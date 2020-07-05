@@ -23,37 +23,16 @@
 #include <string.h>
 #include "kameleon_core.h"
 #include "storage.h"
-#include <freertos/FreeRTOS.h>
-#include <nvs_flash.h>
-#include <nvs.h>
+
 
 #define STORAGE_NAMESPACE ("storage")
 
+int nvs_clear(const char* namespace);
+int nvs_get_item(const char* namespace, const char *key, char *buf);
+
 int storage_clear()
 {
-  nvs_handle_t h;
-  esp_err_t err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &h);
-  if ( err != ESP_OK ) {
-    printf("ERROR (%s) opening NVS handle\n", esp_err_to_name(err));
-    nvs_close(h);
-    return -1;
-  }
-  err = nvs_erase_all(h);
-  if ( err != ESP_OK ) {
-    printf("ERROR (%s) nvs_erase_all\n", esp_err_to_name(err));
-    nvs_close(h);
-    return -1;
-  }
-
-  err = nvs_commit(h);
-  if ( err != ESP_OK ) {
-    printf("ERROR (%s) nvs_commit\n", esp_err_to_name(err));
-    nvs_close(h);
-    return -1;
-  }
-
-  nvs_close(h);  
-  return 0;
+  return nvs_clear(STORAGE_NAMESPACE);
 }
 
 int storage_length()
