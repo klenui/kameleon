@@ -147,7 +147,8 @@ const char* const test_script = http_test_script;
 
 uint8_t *flash_get_data()
 {
-  //return nvs_get_item(PROGRAM_NAMESPACE, key);
+  
+  //return nvs_get_item(PROGRAM_NAMESPACE, app);
   return test_script;
 }
 
