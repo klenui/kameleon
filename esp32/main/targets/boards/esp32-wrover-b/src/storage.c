@@ -21,6 +21,8 @@
 
 
 #include <string.h>
+#include <nvs_flash.h>
+#include <nvs.h>
 #include "kameleon_core.h"
 #include "storage.h"
 

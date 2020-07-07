@@ -24,8 +24,13 @@
 #include "flash.h"
 #include "tty.h"
 
+#define USE_CODED_SCRIPT
+
 #define JS_NAMESPACE ("js")
+#define KEY_APP ("program")
 int nvs_clear(const char* namespace);
+int nvs_get_item_len(const char* namespace, const char *key);
+int nvs_get_item_alloc(const char* namespace, const char *key, char **pbuf);
 
 void flash_clear()
 {
@@ -34,8 +39,11 @@ void flash_clear()
 
 uint32_t flash_size()
 {
-  return 0;
+  // NVS entry size(32 bytes) * partition size(125 entries)
+  return 32*125;
 }
+
+#ifdef USE_CODED_SCRIPT
 
 const char* const timer_test_script = "print(\"in script ok\\n\");\nsetInterval(function(){ print(\"in timer ok\"); }, 1000);\nprint(\"the timer was set.\");\n\n";
 
@@ -144,17 +152,33 @@ const char* const flash_test_script =
 
 
 const char* const test_script = http_test_script;
+#else
+char* program_buff = NULL;
+#endif
 
 uint8_t *flash_get_data()
 {
-  
-  //return nvs_get_item(PROGRAM_NAMESPACE, app);
+#ifdef USE_CODED_SCRIPT  
   return test_script;
+#else
+  if (program_buff) {
+    free(program_buff);
+    program_buff = NULL;
+  }
+  if ( nvs_get_item_alloc(PROGRAM_NAMESPACE, KEY_APP, &program_buff) != 0 ) {
+    return NULL;
+  }
+  return program_buff;
+#endif
 }
 
 uint32_t flash_get_data_size()
 {
+#ifdef USE_CODED_SCRIPT
   return (uint32_t)strlen(test_script);
+#else
+  return nvs_get_item_len(PROGRAM_NAMESPACE, KEY_APP);
+#endif
 }
 
 void flash_program_begin()

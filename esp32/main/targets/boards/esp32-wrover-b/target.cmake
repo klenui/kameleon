@@ -1,6 +1,7 @@
 set(TARGET_SOURCE
   ${CMAKE_CURRENT_LIST_DIR}/src/adc.c
   ${CMAKE_CURRENT_LIST_DIR}/src/flash.c
+  ${CMAKE_CURRENT_LIST_DIR}/src/nvs.c
   ${CMAKE_CURRENT_LIST_DIR}/src/gpio.c
   ${CMAKE_CURRENT_LIST_DIR}/src/i2c.c
   ${CMAKE_CURRENT_LIST_DIR}/src/i2c_freertos.c
