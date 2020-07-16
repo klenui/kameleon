@@ -160,7 +160,6 @@ uint32_t flash_size()
 uint8_t *flash_get_data()
 {
 #ifdef USE_CODED_SCRIPT
-  flash_program(flash_test_script, strlen(flash_test_script)+1); 
   return test_script;
 #else
   if (program_buff) {
