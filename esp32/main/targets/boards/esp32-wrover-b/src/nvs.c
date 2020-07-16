@@ -70,8 +70,7 @@ int nvs_get_item_alloc(const char* namespace, const char *key, char **pbuf)
     nvs_close(h);
     return -1;
   }
-  char* buf = (char*)malloc(size+1);
-  buf[size] = 0;
+  char* buf = (char*)malloc(size);
   err = nvs_get_str(h, key, buf, &size);
   if ( err != ESP_OK ) {
     printf("ERROR (%s) nvs_get_str\n", esp_err_to_name(err));

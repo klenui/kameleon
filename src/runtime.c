@@ -111,21 +111,15 @@ void runtime_load() {
   uint32_t size = flash_get_data_size();
   if (size > 0) {
     uint8_t *script = flash_get_data();
-    printf("runtime_load script='%s'\n", script);
     jerry_value_t parsed_code = jerry_parse (NULL, 0, script, size, JERRY_PARSE_STRICT_MODE);
-    printf("check1\n");
     if (!jerry_value_is_error (parsed_code)) {
-    printf("check2\n");
       jerry_value_t ret_value = jerry_run (parsed_code);
-    printf("check3\n");
       if (jerry_value_is_error (ret_value)) {
-    printf("check4\n");
         jerryxx_print_error(ret_value, true);
         runtime_cleanup();
         runtime_init(false, false);
         return;
       }
-    printf("check5\n");
       jerry_release_value (ret_value);
     } else {
       jerryxx_print_error(parsed_code, true);

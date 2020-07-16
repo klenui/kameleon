@@ -31,7 +31,7 @@ int nvs_get_item_len(const char* namespace, const char *key);
 int nvs_get_item_alloc(const char* namespace, const char *key, char **pbuf);
 int nvs_set_item(const char* namespace, const char *key, const char *buf);
 
-//#define USE_CODED_SCRIPT
+#define USE_CODED_SCRIPT
 
 #ifdef USE_CODED_SCRIPT
 
@@ -141,7 +141,7 @@ const char* const flash_test_script =
 "print(\"in flash script ok\\n\");"
 ;
 
-const char* const test_script = storage_test_script;
+const char* const test_script = http_test_script;
 #else
 char* program_buff = NULL;
 #endif
@@ -170,7 +170,6 @@ uint8_t *flash_get_data()
   if ( nvs_get_item_alloc(JS_NAMESPACE, KEY_APP, &program_buff) != 0 ) {
     return NULL;
   }
-  printf("flash_get_data ret: '%s'", program_buff);
   return (uint8_t*)program_buff;
 #endif
 }
@@ -181,8 +180,8 @@ uint32_t flash_get_data_size()
   return (uint32_t)strlen(test_script);
 #else
   uint32_t ret = nvs_get_item_len(JS_NAMESPACE, KEY_APP);
-  printf("flash_get_data_size ret: %d", ret);
-  return ret;
+  if ( ret > 0 ) return ret - 1; // except NULL char
+  return 0;
 #endif
 }
 
@@ -194,7 +193,6 @@ void flash_program_begin()
 flash_status_t flash_program(uint8_t* buf, uint32_t size)
 {
   flash_status_t ret = nvs_set_item(JS_NAMESPACE, KEY_APP, (const char*)buf);
-  printf("flash_program('%s', %d) : %d\n", buf, size, ret);
   return ret;
 }
 
