@@ -20,28 +20,18 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 #include "kameleon_core.h"
 #include "flash.h"
 #include "tty.h"
-
-#define USE_CODED_SCRIPT
-
 #define JS_NAMESPACE ("js")
 #define KEY_APP ("program")
 int nvs_clear(const char* namespace);
 int nvs_get_item_len(const char* namespace, const char *key);
 int nvs_get_item_alloc(const char* namespace, const char *key, char **pbuf);
+int nvs_set_item(const char* namespace, const char *key, const char *buf);
 
-void flash_clear()
-{
-  return nvs_clear(JS_NAMESPACE);
-}
-
-uint32_t flash_size()
-{
-  // NVS entry size(32 bytes) * partition size(125 entries)
-  return 32*125;
-}
+//#define USE_CODED_SCRIPT
 
 #ifdef USE_CODED_SCRIPT
 
@@ -116,8 +106,9 @@ const char* const wifi_test_script =
   "}});";
 
 const char* const http_test_script = 
-"print(\"in script ok\\n\");"
-"const http = require('http');"
+"print(\"in http_test_script ok\\n\");"
+"global.__netdev = global.__ieee80211dev;"
+"var http = require('http');"
 "http.get({"
 "  host : '192.168.17.103',"
 "  port : 8000,"
@@ -131,44 +122,56 @@ const char* const http_test_script =
 "    console.log('Done.');"
 "  });"
 "});"
+"print(\"check 1\");"
 ;
 
 const char* const storage_test_script =
 "print(\"in script ok\\n\");"
-"const Storage=require('storage');"
-"const storage = new Storage();"
+"var lib=require('storage');"
+"var storage = new lib.Storage();"
 "storage.setItem('value1', 'abcd');"
 "storage.setItem('value2', '1234');"
-"const val1 = storage.getItem('value1');"
-"const val2 = storage.getItem('value2');"
-"console.log(`val1 : ${val1}`);"
-"console.log(`val2 : ${val2}`);"
+"var val1 = storage.getItem('value1');"
+"var val2 = storage.getItem('value2');"
+"console.log('val1 : '+val1);"
+"console.log('val2 : '+val2);"
 ;
 
 const char* const flash_test_script =
-  "print(\"in script ok\\n\");"
-  "var flash = require('flash');"
+"print(\"in flash script ok\\n\");"
 ;
 
-
-const char* const test_script = http_test_script;
+const char* const test_script = storage_test_script;
 #else
 char* program_buff = NULL;
 #endif
 
+void flash_clear()
+{
+  nvs_clear(JS_NAMESPACE);
+}
+
+uint32_t flash_size()
+{
+  // NVS entry size(32 bytes) * partition size(125 entries)
+  return 32*125;
+}
+
 uint8_t *flash_get_data()
 {
-#ifdef USE_CODED_SCRIPT  
+#ifdef USE_CODED_SCRIPT
+  flash_program(flash_test_script, strlen(flash_test_script)+1); 
   return test_script;
 #else
   if (program_buff) {
     free(program_buff);
     program_buff = NULL;
   }
-  if ( nvs_get_item_alloc(PROGRAM_NAMESPACE, KEY_APP, &program_buff) != 0 ) {
+  if ( nvs_get_item_alloc(JS_NAMESPACE, KEY_APP, &program_buff) != 0 ) {
     return NULL;
   }
-  return program_buff;
+  printf("flash_get_data ret: '%s'", program_buff);
+  return (uint8_t*)program_buff;
 #endif
 }
 
@@ -177,7 +180,9 @@ uint32_t flash_get_data_size()
 #ifdef USE_CODED_SCRIPT
   return (uint32_t)strlen(test_script);
 #else
-  return nvs_get_item_len(PROGRAM_NAMESPACE, KEY_APP);
+  uint32_t ret = nvs_get_item_len(JS_NAMESPACE, KEY_APP);
+  printf("flash_get_data_size ret: %d", ret);
+  return ret;
 #endif
 }
 
@@ -186,9 +191,11 @@ void flash_program_begin()
   return;
 }
 
-flash_status_t flash_program(uint8_t * buf, uint32_t size)
+flash_status_t flash_program(uint8_t* buf, uint32_t size)
 {
-  return FLASH_FAIL;
+  flash_status_t ret = nvs_set_item(JS_NAMESPACE, KEY_APP, (const char*)buf);
+  printf("flash_program('%s', %d) : %d\n", buf, size, ret);
+  return ret;
 }
 
 flash_status_t flash_program_byte(uint8_t val)

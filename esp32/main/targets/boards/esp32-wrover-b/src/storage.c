@@ -31,6 +31,7 @@
 
 int nvs_clear(const char* namespace);
 int nvs_get_item(const char* namespace, const char *key, char *buf);
+int nvs_set_item(const char* namespace, const char *key, char *buf);
 
 int storage_clear()
 {
@@ -61,52 +62,12 @@ int storage_length()
 
 int storage_get_item(const char *key, char *buf)
 {
-  nvs_handle_t h;
-  esp_err_t err = nvs_open(STORAGE_NAMESPACE, NVS_READONLY, &h);
-  if ( err != ESP_OK ) {
-    printf("ERROR (%s) opening NVS handle\n", esp_err_to_name(err));
-    nvs_close(h);
-    return -1;
-  }
-
-  size_t size;
-  err = nvs_get_str(h, key, buf, &size);
-  if ( err != ESP_OK ) {
-    printf("ERROR (%s) nvs_get_str\n", esp_err_to_name(err));
-    nvs_close(h);
-    return -1;
-  }
-
-  nvs_close(h);
-  return 0;
+  return nvs_get_item(STORAGE_NAMESPACE, key, buf);
 }
 
 int storage_set_item(const char *key, char *buf)
 {
-  nvs_handle_t h;
-  esp_err_t err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &h);
-  if ( err != ESP_OK ) {
-    printf("ERROR (%s) opening NVS handle\n", esp_err_to_name(err));
-    nvs_close(h);
-    return -1;
-  }
-
-  err = nvs_set_str(h, key, buf);
-  if ( err != ESP_OK ) {
-    printf("ERROR (%s) nvs_set_str\n", esp_err_to_name(err));
-    nvs_close(h);
-    return -1;
-  }
-
-  err = nvs_commit(h);
-  if ( err != ESP_OK ) {
-    printf("ERROR (%s) nvs_commit\n", esp_err_to_name(err));
-    nvs_close(h);
-    return -1;
-  }
-
-  nvs_close(h);  
-  return 0;
+  return nvs_set_item(STORAGE_NAMESPACE, key, buf);
 }
 
 int storage_remove_item(const char *key)
