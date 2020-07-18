@@ -118,6 +118,44 @@ JERRYXX_FUN(ieee80211dev_scan_fn) {
   wifi_scan(callback);
   return 0;
 }
+
+static void wifi_write(jerry_value_t chunk, jerry_value_t callback)
+{
+  // TODO
+  printf("wifi_write\n");
+}
+
+JERRYXX_FUN(ieee80211dev_write_fn) {
+  JERRYXX_CHECK_ARG_ARRAYBUFFER(0, "chunk");
+  JERRYXX_CHECK_ARG_FUNCTION(1, "callback");
+  jerry_value_t chunk = JERRYXX_GET_ARG(0);
+  jerry_value_t callback = JERRYXX_GET_ARG(1);
+  wifi_write(chunk, callback);
+  return 0;
+}
+
+static void wifi_read(jerry_value_t callback)
+{
+  // TODO
+  printf("wifi_write\n");
+}
+
+JERRYXX_FUN(ieee80211dev_read_fn) {
+  JERRYXX_CHECK_ARG_FUNCTION(0, "callback");
+  jerry_value_t callback = JERRYXX_GET_ARG(0);
+  wifi_read(callback);
+  return 0;
+}
+
+JERRYXX_FUN(ieee80211dev_socket_fn) {
+  return 0;
+}
+
+JERRYXX_FUN(ieee80211dev_get_fn) {
+  return 0;
+}
+
+
 JERRYXX_FUN(ieee80211dev_connect_fn) {
   JERRYXX_CHECK_ARG_FUNCTION(0, "callback");
   jerry_value_t callback = JERRYXX_GET_ARG(0);
@@ -141,6 +179,10 @@ void register_global_ieee80211dev() {
   jerry_value_t ieee = jerry_create_object();
   jerryxx_set_property_function(ieee, "reset", ieee80211dev_reset_fn);
   jerryxx_set_property_function(ieee, "scan", ieee80211dev_scan_fn);
+  jerryxx_set_property_function(ieee, "write", ieee80211dev_write_fn);
+  jerryxx_set_property_function(ieee, "read", ieee80211dev_read_fn);
+  jerryxx_set_property_function(ieee, "socket", ieee80211dev_socket_fn);
+  jerryxx_set_property_function(ieee, "get", ieee80211dev_get_fn);
   jerryxx_set_property_function(ieee, "connect", ieee80211dev_connect_fn);
   jerryxx_set_property_function(ieee, "disconnect", ieee80211dev_disconnect_fn);
   jerryxx_set_property_function(ieee, "getConnection", ieee80211dev_get_connection_fn);
