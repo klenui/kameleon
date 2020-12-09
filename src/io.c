@@ -493,7 +493,7 @@ int io_tcp_close(io_tcp_handle_t *tcp) {
 
 
 void io_tcp_start(io_tcp_handle_t *tcp, io_tcp_connect_cb connect_cb, io_tcp_disconnect_cb disconnect_cb,
-                  io_tcp_read_cb read_cb) {
+                  io_stream_read_cb read_cb) {
     ESP_LOGI("io", "io_tcp_start");
     IO_SET_FLAG_ON(tcp->base.flags, IO_FLAG_ACTIVE);
     tcp->connect_cb = connect_cb;
@@ -533,7 +533,7 @@ static void io_tcp_run() {
                     case TCP_EVENT_READ:
                         ESP_LOGI("io", "io_tcp_run TCP_EVENT_READ");
                         if (handle->read_cb != NULL) {
-                            handle->read_cb(handle, message.read.message, message.read.len);
+                            handle->read_cb((io_stream_handle_t*)handle, message.read.message, message.read.len);
                             free(message.read.message);
                         }
                         break;

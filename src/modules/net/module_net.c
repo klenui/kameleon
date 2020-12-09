@@ -32,7 +32,7 @@ static void net_on_connect(io_tcp_handle_t *handle);
 
 static void net_on_disconnect(io_tcp_handle_t *handle);
 
-static void net_on_read(io_tcp_handle_t *handle, const char *message, int len);
+static void net_on_read(io_stream_handle_t *handle, const char *message, int len);
 
 
 static void PrintJsType(jerry_value_t obj, const char *name) {
@@ -235,7 +235,7 @@ static void net_on_disconnect(io_tcp_handle_t *handle) {
     jerry_call_function(callback, thiz, NULL, 0);
 }
 
-static void net_on_read(io_tcp_handle_t *handle, const char *message, int len) {
+static void net_on_read(io_stream_handle_t *handle, const char *message, int len) {
     ESP_LOGD(TAG, "net_on_read");
     jerry_value_t thiz = handle->this_val;
     jerry_value_t callback = jerryxx_get_property(thiz, "read_cb");

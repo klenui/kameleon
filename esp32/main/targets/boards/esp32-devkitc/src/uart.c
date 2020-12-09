@@ -146,7 +146,7 @@ int uart_write(uint8_t port, uint8_t *buf, size_t len)
   if (port > 1) {
     return UARTPORT_ERROR; //Only 8 bit is allowed.
   }
-  return uart_write_bytes(esp_port, buf, len);
+  return uart_write_bytes(esp_port, (const char*)buf, len);
 }
 
 uint32_t uart_available(uint8_t port)

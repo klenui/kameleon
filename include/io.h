@@ -45,6 +45,7 @@ typedef struct io_uart_handle_s io_uart_handle_t;
 typedef struct io_ieee80211_handle_s io_ieee80211_handle_t;
 #endif//KAMELEON_MODULE_IEEE80211
 #ifdef KAMELEON_MODULE_TCP
+typedef struct io_stream_handle_s io_stream_handle_t;
 typedef struct io_tcp_handle_s io_tcp_handle_t;
 #endif//KAMELEON_MODULE_TCP
 typedef struct io_idle_handle_s io_idle_handle_t;
@@ -171,16 +172,24 @@ struct io_ieee80211_handle_s {
 #endif//KAMELEON_MODULE_IEEE80211
 
 #ifdef KAMELEON_MODULE_TCP
+#define STREAM_FIELDS \
+  jerry_value_t this_val;\
+  io_stream_read_cb read_cb;
+
+typedef void (* io_stream_read_cb)(io_stream_handle_t *, const char*, int);
+struct io_stream_handle_s {
+  io_handle_t base;
+  STREAM_FIELDS;
+};
+
 typedef void (* io_tcp_connect_cb)(io_tcp_handle_t *);
 typedef void (* io_tcp_disconnect_cb)(io_tcp_handle_t *);
-typedef void (* io_tcp_read_cb)(io_tcp_handle_t *, const char*, int);
 
 struct io_tcp_handle_s {
   io_handle_t base;
+  STREAM_FIELDS;
   io_tcp_connect_cb connect_cb;
   io_tcp_disconnect_cb disconnect_cb;
-  io_tcp_read_cb read_cb;
-  jerry_value_t this_val;
   int fd;
 };
 #endif//KAMELEON_MODULE_TCP
@@ -268,7 +277,7 @@ void io_ieee80211_cleanup();
 #endif//KAMELEON_MODULE_IEEE80211
 #ifdef KAMELEON_MODULE_TCP
 void io_tcp_init(io_tcp_handle_t *tcp);
-void io_tcp_start(io_tcp_handle_t *tcp, io_tcp_connect_cb connect_cb, io_tcp_disconnect_cb disconnect_cb, io_tcp_read_cb read_cb);
+void io_tcp_start(io_tcp_handle_t *tcp, io_tcp_connect_cb connect_cb, io_tcp_disconnect_cb disconnect_cb, io_stream_read_cb read_cb);
 void io_tcp_stop(io_tcp_handle_t *tcp);
 io_tcp_handle_t *io_tcp_get_by_fd(int fd);
 void io_tcp_cleanup();
